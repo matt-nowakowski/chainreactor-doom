@@ -24,7 +24,8 @@ pub mod types;
 pub use game::GameState;
 pub use map::DoomMap;
 pub use renderer::{
-    palette_color_rgb, render_frame, Framebuffer, FRAMEBUFFER_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH,
+    palette_color_rgb, render_frame, render_title_screen, Framebuffer, FRAMEBUFFER_SIZE,
+    SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 pub use types::{
     Decoration, DecorationType, DoorState, DoomRng, Enemy, EnemyAiState, EnemyType, GameEvent,

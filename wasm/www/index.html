@@ -293,6 +293,18 @@
                 if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
                     e.preventDefault();
                 }
+
+                // Title screen: any key starts game
+                if (game.is_title_screen()) {
+                    game.start_game();
+                    return;
+                }
+
+                // Death/victory: any key restarts
+                if (game.game_over() || game.level_complete()) {
+                    window.restartGame();
+                    return;
+                }
             });
             document.addEventListener('keyup', (e) => {
                 keys[e.code] = false;

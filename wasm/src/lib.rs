@@ -6,6 +6,8 @@ use wasm_bindgen::prelude::*;
 pub struct DoomGame {
     state: GameState,
     framebuffer: Framebuffer,
+    on_title_screen: bool,
+    title_tick: u64,
 }
 
 #[wasm_bindgen]
@@ -17,10 +19,27 @@ impl DoomGame {
         Self {
             state,
             framebuffer: Framebuffer::new(),
+            on_title_screen: true,
+            title_tick: 0,
         }
     }
 
+    /// Returns true if on title screen.
+    pub fn is_title_screen(&self) -> bool {
+        self.on_title_screen
+    }
+
+    /// Dismiss title screen and start the game.
+    pub fn start_game(&mut self) {
+        self.on_title_screen = false;
+    }
+
     pub fn tick(&mut self, input_codes: &[u8]) {
+        if self.on_title_screen {
+            self.title_tick += 1;
+            return;
+        }
+
         let inputs: Vec<PlayerInput> = input_codes
             .iter()
             .filter_map(|&code| match code {
@@ -45,7 +64,11 @@ impl DoomGame {
 
     /// Render the current frame. Read pixels via rgba_ptr()/rgba_len().
     pub fn render(&mut self) {
-        render_frame(&self.state, &mut self.framebuffer);
+        if self.on_title_screen {
+            render_title_screen(&mut self.framebuffer, self.title_tick);
+        } else {
+            render_frame(&self.state, &mut self.framebuffer);
+        }
     }
 
     pub fn rgba_ptr(&self) -> *const u8 {

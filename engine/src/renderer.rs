@@ -230,14 +230,13 @@ pub fn render_frame(state: &GameState, fb: &mut Framebuffer) {
     // 6. Draw status bar
     render_stbar(state, fb);
 
-    // 7. Death/victory overlay — Doom-style red tint on death
+    // 7. Death/victory overlay
     if state.game_over {
-        // Red tint over viewport (like Doom's death screen)
+        // Red tint over viewport
         for y in 0..VIEW_HEIGHT {
             for x in 0..SCREEN_WIDTH {
                 let off = (y * SCREEN_WIDTH + x) * 4;
                 if off + 3 < fb.rgba.len() {
-                    // Shift toward red, darken
                     let r = fb.rgba[off];
                     let g = fb.rgba[off + 1];
                     let b = fb.rgba[off + 2];
@@ -247,9 +246,23 @@ pub fn render_frame(state: &GameState, fb: &mut Framebuffer) {
                 }
             }
         }
-        render_overlay_text(fb, "YOU DIED", 255, 0, 0);
+        draw_small_text(fb, "PRESS ANY KEY", 160, VIEW_HEIGHT / 2, 200, 200, 200);
     } else if state.level_complete {
-        render_overlay_text(fb, "LEVEL COMPLETE", 0, 255, 0);
+        // Green tint over viewport
+        for y in 0..VIEW_HEIGHT {
+            for x in 0..SCREEN_WIDTH {
+                let off = (y * SCREEN_WIDTH + x) * 4;
+                if off + 3 < fb.rgba.len() {
+                    let r = fb.rgba[off];
+                    let g = fb.rgba[off + 1];
+                    let b = fb.rgba[off + 2];
+                    fb.rgba[off] = r / 3;
+                    fb.rgba[off + 1] = (g as u32 * 180 / 255 + 75).min(255) as u8;
+                    fb.rgba[off + 2] = b / 3;
+                }
+            }
+        }
+        draw_small_text(fb, "PRESS ANY KEY", 160, VIEW_HEIGHT / 2, 200, 200, 200);
     }
 }
 
@@ -1016,12 +1029,21 @@ fn char_bitmap(ch: char) -> [u8; 7] {
         'C' => [0b01110, 0b10001, 0b10000, 0b10000, 0b10000, 0b10001, 0b01110],
         'D' => [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
         'E' => [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111],
+        'F' => [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000],
+        'G' => [0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110],
+        'H' => [0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
         'I' => [0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+        'K' => [0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001],
         'L' => [0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111],
         'M' => [0b10001, 0b11011, 0b10101, 0b10101, 0b10001, 0b10001, 0b10001],
+        'N' => [0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001, 0b10001],
         'O' => [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
         'P' => [0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000],
+        'R' => [0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001],
+        'S' => [0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110],
         'T' => [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
+        'W' => [0b10001, 0b10001, 0b10001, 0b10101, 0b10101, 0b11011, 0b10001],
+        'X' => [0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b01010, 0b10001],
         'U' => [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
         'V' => [0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b01010, 0b00100],
         'Y' => [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100],
@@ -1059,3 +1081,332 @@ pub fn palette_color_rgb(idx: u8) -> (u8, u8, u8) {
     let c = &PALETTE[idx as usize];
     (c[0], c[1], c[2])
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  TITLE SCREEN
+// ═══════════════════════════════════════════════════════════════
+
+/// Render the title screen into the framebuffer.
+/// `tick` is used for the blinking "PRESS ANY KEY" text.
+pub fn render_title_screen(fb: &mut Framebuffer, tick: u64) {
+    // Fill with black
+    for i in 0..FRAMEBUFFER_SIZE {
+        let off = i * 4;
+        fb.rgba[off] = 0;
+        fb.rgba[off + 1] = 0;
+        fb.rgba[off + 2] = 0;
+        fb.rgba[off + 3] = 255;
+    }
+
+    // Harsh red band behind logo — hard edges, not smooth
+    for y in 58..142 {
+        let intensity: u8 = if y < 68 || y > 132 { 15 } else { 30 };
+        for x in 20..300 {
+            let off = (y * SCREEN_WIDTH + x) * 4;
+            fb.rgba[off] = intensity;
+        }
+    }
+
+    // "CHAIN" — first line
+    let letters_chain: [&[u16]; 5] = [
+        &TITLE_C, &TITLE_H, &TITLE_A, &TITLE_I, &TITLE_N,
+    ];
+    // "REACTOR" — second line
+    let letters_reactor: [&[u16]; 7] = [
+        &TITLE_R, &TITLE_E, &TITLE_A, &TITLE_C, &TITLE_T, &TITLE_O, &TITLE_R,
+    ];
+
+    let letter_w = 12;
+    let letter_h = 18;
+    let scale = 2;
+    let rendered_w = letter_w * scale;
+    let gap = 2;
+
+    // Line 1: "CHAIN"
+    let line1_w = 5 * rendered_w + 4 * gap;
+    let line1_x = (SCREEN_WIDTH - line1_w) / 2;
+    let line1_y = 60;
+    for (i, glyph) in letters_chain.iter().enumerate() {
+        draw_title_letter(fb, line1_x + i * (rendered_w + gap), line1_y, glyph, letter_w, letter_h, scale, tick);
+    }
+
+    // Line 2: "REACTOR"
+    let line2_w = 7 * rendered_w + 6 * gap;
+    let line2_x = (SCREEN_WIDTH - line2_w) / 2;
+    let line2_y = 100;
+    for (i, glyph) in letters_reactor.iter().enumerate() {
+        draw_title_letter(fb, line2_x + i * (rendered_w + gap), line2_y, glyph, letter_w, letter_h, scale, tick);
+    }
+
+    // "PRESS ANY KEY" — small 1x scale text, blinking, below logo
+    if (tick / 8) % 2 == 0 {
+        draw_small_text(fb, "PRESS ANY KEY", 160, 155, 160, 160, 160);
+    }
+}
+
+/// Draw small centered text using the 5×7 bitmap font at 1x scale.
+fn draw_small_text(fb: &mut Framebuffer, text: &str, center_x: usize, y: usize, r: u8, g: u8, b: u8) {
+    let char_w = 6; // 5px + 1px gap
+    let total_w = text.len() * char_w;
+    let x_start = center_x.saturating_sub(total_w / 2);
+
+    for (i, ch) in text.chars().enumerate() {
+        let bitmap = char_bitmap(ch);
+        let cx = x_start + i * char_w;
+        for row in 0..7 {
+            for col in 0..5 {
+                if bitmap[row] & (1 << (4 - col)) != 0 {
+                    let px = cx + col;
+                    let py = y + row;
+                    if px < SCREEN_WIDTH && py < SCREEN_HEIGHT {
+                        fb.set_rgb(px, py, r, g, b);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn draw_title_letter(
+    fb: &mut Framebuffer,
+    x: usize, y: usize,
+    glyph: &[u16],
+    w: usize, h: usize,
+    scale: usize,
+    tick: u64,
+) {
+    // Heat shimmer: band boundaries shift over time
+    // Use a slow sine-like wave via integer LUT (no floats)
+    // Wave cycles every 32 ticks, shifts bands by ±2 rows
+    let phase = (tick % 32) as i32;
+    let wave = match phase {
+        0..=3 => 0i32,
+        4..=7 => 1,
+        8..=11 => 2,
+        12..=15 => 1,
+        16..=19 => 0,
+        20..=23 => -1,
+        24..=27 => -2,
+        _ => -1,
+    };
+
+    for row in 0..h {
+        if row >= glyph.len() { break; }
+        let bits = glyph[row];
+        for col in 0..w {
+            if bits & (1 << (w - 1 - col)) != 0 {
+                for sy in 0..scale {
+                    for sx in 0..scale {
+                        let px = x + col * scale + sx;
+                        let py = y + row * scale + sy;
+                        if px < SCREEN_WIDTH && py < SCREEN_HEIGHT {
+                            // Shifted row for band calculation — heat shimmer effect
+                            let shifted = (row as i32 + wave).max(0) as usize;
+                            let band = (shifted * 5) / h.max(1);
+                            let (r, g, b) = match band {
+                                0 => (255u8, 100u8, 0u8),   // bright orange
+                                1 => (230, 50, 0),           // red-orange
+                                2 => (200, 20, 0),           // red
+                                3 => (160, 0, 0),            // dark red
+                                _ => (120, 0, 0),            // crimson
+                            };
+                            fb.set_rgb(px, py, r, g, b);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Heavy metal style bitmap font — 12×18 pixels per letter.
+// Each row is a u16 with bits 11..0 representing pixels left to right.
+
+const TITLE_C: [u16; 18] = [
+    0b011111111110,
+    0b111111111111,
+    0b111100000011,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000011,
+    0b111111111111,
+    0b011111111110,
+];
+
+const TITLE_H: [u16; 18] = [
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111111111111,
+    0b111111111111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111100001111,
+    0b011110011110,
+];
+
+const TITLE_A: [u16; 18] = [
+    0b000001100000,
+    0b000011110000,
+    0b000111111000,
+    0b001111111100,
+    0b011110011110,
+    0b011100001110,
+    0b111000000111,
+    0b111000000111,
+    0b111111111111,
+    0b111111111111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111100001111,
+    0b011110011110,
+];
+
+const TITLE_I: [u16; 18] = [
+    0b011111111110,
+    0b001111111100,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b001111111100,
+    0b011111111110,
+];
+
+const TITLE_N: [u16; 18] = [
+    0b111000000111,
+    0b111100000111,
+    0b111110000111,
+    0b111111000111,
+    0b111011100111,
+    0b111001110111,
+    0b111000111111,
+    0b111000011111,
+    0b111000001111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111100001111,
+    0b011110011110,
+];
+
+const TITLE_R: [u16; 18] = [
+    0b111111111100,
+    0b111111111110,
+    0b111000001111,
+    0b111000000111,
+    0b111000000111,
+    0b111000001111,
+    0b111111111110,
+    0b111111111100,
+    0b111111100000,
+    0b111001110000,
+    0b111000111000,
+    0b111000011100,
+    0b111000001110,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111100001111,
+    0b011110011110,
+];
+
+const TITLE_E: [u16; 18] = [
+    0b111111111111,
+    0b111111111111,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111111111100,
+    0b111111111100,
+    0b111111111100,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111100000000,
+    0b111111111111,
+    0b111111111111,
+];
+
+const TITLE_T: [u16; 18] = [
+    0b111111111111,
+    0b111111111111,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000011110000,
+    0b000111111000,
+    0b001111111100,
+];
+
+const TITLE_O: [u16; 18] = [
+    0b001111111100,
+    0b011111111110,
+    0b111100001111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111000000111,
+    0b111100001111,
+    0b011111111110,
+    0b001111111100,
+];
