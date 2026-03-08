@@ -215,31 +215,31 @@ impl DoomMap {
         // W = Wall, . = empty, D = door, X = exit
         #[rustfmt::skip]
         let layout: Vec<&str> = vec![
-            //0123456789012345678901234
-            "WWWWWWWWWWWWWWWWWWWWWWWW", // 0
-            "W..........W..........WW", // 1  Start hall (bright, safe)
-            "W..........W..........WW", // 2
-            "W..........W..........WW", // 3
-            "W..........W..........WW", // 4
-            "WWWWW.WWWWWWWWWW.WWWWWWW", // 5  Corridor with two branches
-            "W..........W..........WW", // 6  West armory (storage)
-            "W..........D..........WW", // 7
-            "W..........W..........WW", // 8  East corridor
-            "WWWWWDWWWWWWWWWWWDWWWWWW", // 9  Doors to deeper areas
-            "W..........W..........WW", // 10 Ritual hall (west)
-            "W..........W..........WW", // 11
-            "W..........W..........WW", // 12
-            "W..........W..........WW", // 13
-            "WWWWWW.WWWWWWWWWWWWWWWWW", // 14
-            "W..........W..........WW", // 15 Dark corridor
-            "W..........D..........WW", // 16
-            "W..........W..........WW", // 17
-            "WWWWWDWWWWWWWWWWW.WWWWWW", // 18 Final wing doors
-            "W..........W..........WW", // 19 Command center
-            "W..........W..........WW", // 20
-            "W..........W..........WW", // 21
-            "W..........W.........XWW", // 22 Exit
-            "WWWWWWWWWWWWWWWWWWWWWWWW", // 23
+            //01234567890123456789012
+            "WWWWWWWWWWWWWWWWWWWWWWW", // 0
+            "W..........W..........W", // 1  Start hall (bright, safe)
+            "W..........W..........W", // 2
+            "W..........W..........W", // 3
+            "W..........W..........W", // 4
+            "WWWWW.WWWWWWWWWW.WWWWWW", // 5  Corridor with two branches
+            "W..........W..........W", // 6  West armory (storage)
+            "W..........D..........W", // 7
+            "W..........W..........W", // 8  East corridor
+            "WWWWWDWWWWWWWWWWWDWWWWW", // 9  Doors to deeper areas
+            "W..........W..........W", // 10 Ritual hall (west)
+            "W..........W..........W", // 11
+            "W..........W..........W", // 12
+            "W..........W..........W", // 13
+            "WWWWWW.WWWWWWWWWWWWWWWW", // 14
+            "W..........W..........W", // 15 Dark corridor
+            "W..........D..........W", // 16
+            "W..........W..........W", // 17
+            "WWWWWDWWWWWWWWWWW.WWWWW", // 18 Final wing doors
+            "W..........W..........W", // 19 Command center
+            "W..........W..........W", // 20
+            "W..........W..........W", // 21
+            "W..........W.........XW", // 22 Exit
+            "WWWWWWWWWWWWWWWWWWWWWWW", // 23
         ];
 
         // Sector map — defines theme per room
@@ -247,30 +247,30 @@ impl DoomMap {
         // H = Ritual Hall, D = Dark corridor, K = Command center, E = Exit area
         #[rustfmt::skip]
         let sector_map: Vec<&str> = vec![
-            "WWWWWWWWWWWWWWWWWWWWWWWW", // 0
-            "WSSSSSSSSSSWCCCCCCCCCCCW", // 1  Start(10) | Corridor(11)
-            "WSSTTTTTTSSWCCCCCCCCCCCW", // 2  Tech floor center path
-            "WSSTTTTTTSSWCCCCCCCCCCCW", // 3
-            "WSSSSSSSSSSWCCCCCCCCCCCW", // 4
-            "WWWWWSWWWWWWWWWWWCWWWWWW", // 5
-            "WAAAAAAAAAAWCCCCCCCCCCWW", // 6  Armory(10) | Corridor(10)
-            "WAAAAAAAAAADCCCCCCCCCCWW", // 7
-            "WAAAAAAAAAAWCCCCCCCCCCWW", // 8
-            "WWWWWDWWWWWWWWWWWDWWWWWW", // 9
-            "WHHHHHHHHHHWDDDDDDDDDDWW", // 10 Ritual(10) | Dark(10)
-            "WHHHHHHHHHHWDDDDDDDDDDWW", // 11
-            "WHHHHHHHHHHWDDDDDDDDDDWW", // 12
-            "WHHHHHHHHHHWDDDDDDDDDDWW", // 13
-            "WWWWWWHWWWWWWWWWWWWWWWWW", // 14
-            "WDDDDDDDDDDWKKKKKKKKKKWW", // 15 Dark(10) | Command(10)
-            "WDDDDDDDDDDWKKKKKKKKKKWW", // 16
-            "WDDDDDDDDDDWKKKKKKKKKKWW", // 17
-            "WWWWWDWWWWWWWWWWWKWWWWWW", // 18
-            "WKKKKKKKKKKWEEEEEEEEEEWW", // 19 Command(10) | Exit(10)
-            "WKKKKKKKKKKWEEEEEEEEEEWW", // 20
-            "WKKKKKKKKKKWEEEEEEEEEEWW", // 21
-            "WKKKKKKKKKKWEEEEEEEEEEWW", // 22
-            "WWWWWWWWWWWWWWWWWWWWWWWW", // 23
+            "WWWWWWWWWWWWWWWWWWWWWWW", // 0
+            "WSSSSSSSSSSWCCCCCCCCCCW", // 1  Start(10) | Corridor(10)
+            "WSSTTTTTTSSWCCCCCCCCCCW", // 2  Tech floor center path
+            "WSSTTTTTTSSWCCCCCCCCCCW", // 3
+            "WSSSSSSSSSSWCCCCCCCCCCW", // 4
+            "WWWWWSWWWWWWWWWWWCWWWWW", // 5
+            "WAAAAAAAAAAWCCCCCCCCCCW", // 6  Armory(10) | Corridor(10)
+            "WAAAAAAAAAADCCCCCCCCCCW", // 7
+            "WAAAAAAAAAAWCCCCCCCCCCW", // 8
+            "WWWWWDWWWWWWWWWWWDWWWWW", // 9
+            "WHHHHHHHHHHWDDDDDDDDDDW", // 10 Ritual(10) | Dark(10)
+            "WHHHHHHHHHHWDDDDDDDDDDW", // 11
+            "WHHHHHHHHHHWDDDDDDDDDDW", // 12
+            "WHHHHHHHHHHWDDDDDDDDDDW", // 13
+            "WWWWWWHWWWWWWWWWWWWWWWW", // 14
+            "WDDDDDDDDDDWKKKKKKKKKKW", // 15 Dark(10) | Command(10)
+            "WDDDDDDDDDDWKKKKKKKKKKW", // 16
+            "WDDDDDDDDDDWKKKKKKKKKKW", // 17
+            "WWWWWDWWWWWWWWWWWKWWWWW", // 18
+            "WKKKKKKKKKKWEEEEEEEEEEW", // 19 Command(10) | Exit(10)
+            "WKKKKKKKKKKWEEEEEEEEEEW", // 20
+            "WKKKKKKKKKKWEEEEEEEEEEW", // 21
+            "WKKKKKKKKKKWEEEEEEEEEEW", // 22
+            "WWWWWWWWWWWWWWWWWWWWWWW", // 23
         ];
 
         let height = layout.len() as u32;

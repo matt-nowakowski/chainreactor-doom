@@ -245,7 +245,7 @@ fn test_enemy_stats() {
     assert!(imp.is_alive());
 
     let demon = Enemy::new(EnemyType::Demon, 5000, 5000);
-    assert_eq!(demon.health, 150);
+    assert_eq!(demon.health, 80);
     assert_eq!(demon.attack_range(), 1500); // melee only
 
     let sgt = Enemy::new(EnemyType::Sergeant, 5000, 5000);

@@ -338,7 +338,8 @@ fn render_floors_ceilings_full(
         // --- Ceiling (entire top half of viewport) ---
         // DOOM sky logic: if the wall hit for this column is in a sky sector,
         // render sky for all ceiling pixels above that wall. Otherwise use flats.
-        let col_has_sky = wall_cols[col].hit_sector_has_sky;
+        let wc = &wall_cols[col];
+        let col_has_sky = wc.hit_sector_has_sky;
 
         for y in 0..(view_mid as usize) {
             if col_has_sky {
@@ -365,7 +366,14 @@ fn render_floors_ceilings_full(
             let sector = state.map.get_sector(gx as u32, gy as u32);
 
             // Sky sector check — ceiling_tex 255 means sky
-            if sector.ceiling_tex == 255 {
+            // Only apply if ceiling ray is closer than the wall hit for this column
+            // (prevents sky bleeding through non-sky walls from sectors behind them)
+            let wall_dist_approx = if wc.wall_height > 0 {
+                VIEW_HEIGHT as f64 / wc.wall_height as f64
+            } else {
+                f64::MAX
+            };
+            if sector.ceiling_tex == 255 && ceil_dist <= wall_dist_approx {
                 render_sky_pixel(fb, col, y, state.player.angle, view_mid as usize);
                 continue;
             }
@@ -1084,7 +1092,7 @@ fn render_stbar_face(state: &GameState, fb: &mut Framebuffer, bar_y: usize) {
     let h = face.height as usize;
 
     // Center in the STBAR center panel (x=104..174)
-    let center_x: usize = 159;
+    let center_x: usize = 161;
     let fx = center_x.saturating_sub(w / 2);
     let fy = bar_y + 2;
 

@@ -366,7 +366,7 @@ impl Enemy {
     pub fn new(enemy_type: EnemyType, x: i32, y: i32) -> Self {
         let health = match enemy_type {
             EnemyType::Imp => 60,
-            EnemyType::Demon => 150,
+            EnemyType::Demon => 80,
             EnemyType::Sergeant => 30,
         };
         Self {
@@ -398,7 +398,7 @@ impl Enemy {
     pub fn speed(&self) -> i32 {
         match self.enemy_type {
             EnemyType::Imp => 40,
-            EnemyType::Demon => 70,
+            EnemyType::Demon => 55,
             EnemyType::Sergeant => 30,
         }
     }
@@ -406,7 +406,7 @@ impl Enemy {
     pub fn damage(&self) -> i32 {
         match self.enemy_type {
             EnemyType::Imp => 15,
-            EnemyType::Demon => 25,
+            EnemyType::Demon => 15,
             EnemyType::Sergeant => 10,
         }
     }
