@@ -293,7 +293,7 @@ impl DoomMap {
                     b'S' => Sector::new(0, 1000, 3, 0, 180),      // Start hall: moderate
                     b'T' => Sector::new(0, 1000, 5, 0, 190),      // Start center: tech floor, slightly brighter
                     b'A' => Sector::new(0, 1000, 5, 0, 140),      // Armory: dim industrial
-                    b'H' => Sector::new(0, 1100, 7, 2, 120)       // Ritual hall: tall ceiling, NUKAGE floor, dim
+                    b'H' => Sector::new(0, 1100, 7, 255, 120)      // Ritual hall: tall ceiling, SKY ceiling, dim
                         .with_effect(LightEffect::Flicker),
                     b'D' => Sector::new(0, 900, 4, 1, 100)        // Dark corridor: low ceiling, dark
                         .with_effect(LightEffect::Flicker),
@@ -360,12 +360,15 @@ impl DoomMap {
                 (c(3, 15).0, c(3, 15).1, ItemType::AmmoClip),
                 (c(15, 16).0, c(15, 16).1, ItemType::ShellBox),
 
-                // ── Command center: health + ammo for final push ──
+                // ── Command center: chaingun + health + ammo for final push ──
                 (c(5, 19).0, c(5, 19).1, ItemType::HealthPack),
                 (c(9, 20).0, c(9, 20).1, ItemType::AmmoBox),
+                (c(3, 21).0, c(3, 21).1, ItemType::Chaingun),
 
-                // ── Exit area: medikit for survivors ──
+                // ── Exit area: rocket launcher + medikit for survivors ──
                 (c(18, 22).0, c(18, 22).1, ItemType::Medikit),
+                (c(15, 21).0, c(15, 21).1, ItemType::RocketLauncher),
+                (c(19, 20).0, c(19, 20).1, ItemType::RocketBox),
             ],
             decorations: vec![
                 // ══ START HALL — clean military base ══

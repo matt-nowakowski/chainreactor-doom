@@ -162,6 +162,19 @@ impl GameState {
                     self.player.current_weapon = WeaponType::Shotgun;
                 }
             }
+            PlayerInput::Weapon4 => {
+                if self.player.has_chaingun {
+                    self.player.current_weapon = WeaponType::Chaingun;
+                }
+            }
+            PlayerInput::Weapon5 => {
+                if self.player.has_rocket_launcher {
+                    self.player.current_weapon = WeaponType::RocketLauncher;
+                }
+            }
+            PlayerInput::ToggleAutomap => {
+                self.player.show_automap = !self.player.show_automap;
+            }
         }
     }
 
@@ -171,6 +184,12 @@ impl GameState {
             let mut w = vec![WeaponType::Fist, WeaponType::Pistol];
             if self.player.has_shotgun {
                 w.push(WeaponType::Shotgun);
+            }
+            if self.player.has_chaingun {
+                w.push(WeaponType::Chaingun);
+            }
+            if self.player.has_rocket_launcher {
+                w.push(WeaponType::RocketLauncher);
             }
             w
         };
@@ -246,6 +265,41 @@ impl GameState {
                     let damage = self.randomize_damage(8);
                     self.hitscan_attack(px, py, angle, 64 * FP_SCALE, damage, 50);
                 }
+                self.alert_enemies_from_sound();
+            }
+            WeaponType::Chaingun => {
+                if self.player.ammo <= 0 {
+                    return;
+                }
+                self.player.ammo -= 1;
+                self.player.weapon_cooldown = 2; // faster than pistol
+                let damage = self.randomize_damage(15);
+                let (px, py, pa) = (self.player.x, self.player.y, self.player.angle);
+                self.hitscan_attack(px, py, pa, 64 * FP_SCALE, damage, 100);
+                self.alert_enemies_from_sound();
+            }
+            WeaponType::RocketLauncher => {
+                if self.player.rockets <= 0 {
+                    return;
+                }
+                self.player.rockets -= 1;
+                self.player.weapon_cooldown = 8;
+                let damage = self.randomize_damage(80);
+                // Fire a rocket projectile (like Imp fireball but player-owned, higher damage)
+                let angle_rad = self.player.angle as f64 / 1000.0;
+                let cos_a = (angle_rad.cos() * 1000.0) as i32;
+                let sin_a = (angle_rad.sin() * 1000.0) as i32;
+                let speed = 400; // faster than imp fireball
+                self.projectiles.push(Projectile {
+                    x: self.player.x + cos_a * 500 / FP_SCALE,
+                    y: self.player.y + sin_a * 500 / FP_SCALE,
+                    vx: cos_a * speed / FP_SCALE,
+                    vy: sin_a * speed / FP_SCALE,
+                    damage,
+                    source: ProjectileSource::Player,
+                    alive: true,
+                    sprite_id: 2, // rocket sprite
+                });
                 self.alert_enemies_from_sound();
             }
         }
@@ -487,7 +541,51 @@ impl GameState {
                 continue;
             }
 
-            // Player collision (for enemy projectiles)
+            // Player projectile hitting enemies (rockets)
+            if matches!(proj.source, ProjectileSource::Player) {
+                let mut hit_enemy = false;
+                for enemy in self.enemies.iter_mut() {
+                    if !enemy.is_alive() { continue; }
+                    let dx = (proj.x - enemy.x) as i64;
+                    let dy = (proj.y - enemy.y) as i64;
+                    let dist_sq = dx * dx + dy * dy;
+                    if dist_sq < 400 * 400 {
+                        // Direct hit
+                        enemy.health -= proj.damage;
+                        if enemy.health <= 0 {
+                            enemy.ai_state = EnemyAiState::Dead;
+                            self.player.kills += 1;
+                        } else {
+                            let pain_chance = match enemy.enemy_type {
+                                EnemyType::Imp => 200,
+                                EnemyType::Demon => 180,
+                                EnemyType::Sergeant => 170,
+                            };
+                            if (self.rng.next() as i32) < pain_chance {
+                                enemy.ai_state = EnemyAiState::Pain;
+                            }
+                        }
+                        // Blood effect
+                        self.effects.push(VisualEffect {
+                            x: enemy.x, y: enemy.y,
+                            effect_type: EffectType::BloodSplat, timer: 4,
+                        });
+                        hit_enemy = true;
+                        break;
+                    }
+                }
+                if hit_enemy {
+                    // Spawn puff at impact
+                    self.effects.push(VisualEffect {
+                        x: proj.x, y: proj.y,
+                        effect_type: EffectType::BulletPuff, timer: 4,
+                    });
+                    proj.alive = false;
+                    continue;
+                }
+            }
+
+            // Enemy projectile hitting player
             if let ProjectileSource::Enemy(etype) = proj.source {
                 let dx = (proj.x - self.player.x) as i64;
                 let dy = (proj.y - self.player.y) as i64;
@@ -711,6 +809,7 @@ impl GameState {
 
         let health_damage = amount - armor_absorb;
         self.player.health -= health_damage;
+        self.player.last_damage_tick = self.tick;
 
         self.events.push(GameEvent::PlayerDamaged {
             amount: health_damage,
@@ -769,6 +868,22 @@ impl GameState {
                     self.player.has_shotgun = true;
                     self.player.shells += 8;
                     self.player.current_weapon = WeaponType::Shotgun;
+                    true
+                }
+                ItemType::Chaingun => {
+                    self.player.has_chaingun = true;
+                    self.player.ammo += 20;
+                    self.player.current_weapon = WeaponType::Chaingun;
+                    true
+                }
+                ItemType::RocketLauncher => {
+                    self.player.has_rocket_launcher = true;
+                    self.player.rockets += 2;
+                    self.player.current_weapon = WeaponType::RocketLauncher;
+                    true
+                }
+                ItemType::RocketBox => {
+                    self.player.rockets += 5;
                     true
                 }
                 ItemType::Armor if self.player.armor < 100 => {

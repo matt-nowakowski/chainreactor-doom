@@ -230,6 +230,11 @@ pub fn render_frame(state: &GameState, fb: &mut Framebuffer) {
     // 6. Draw status bar
     render_stbar(state, fb);
 
+    // 6.5 Automap overlay (Tab toggle)
+    if state.player.show_automap {
+        render_automap(state, fb);
+    }
+
     // 7. Death/victory overlay
     if state.game_over {
         // Red tint over viewport
@@ -334,6 +339,13 @@ fn render_floors_ceilings_full(
             }
 
             let sector = state.map.get_sector(gx as u32, gy as u32);
+
+            // Sky sectors (ceiling_tex == 255) — render sky gradient instead of flat
+            if sector.ceiling_tex == 255 {
+                render_sky_pixel(fb, col, y, state.player.angle, view_mid as usize);
+                continue;
+            }
+
             let tx = ((world_x - world_x.floor()) * FLAT_SIZE as f64) as usize % FLAT_SIZE;
             let ty = ((world_y - world_y.floor()) * FLAT_SIZE as f64) as usize % FLAT_SIZE;
 
@@ -490,6 +502,9 @@ fn item_sprite_name(item_type: ItemType) -> &'static str {
         ItemType::KeyBlue => "BKEYA0",
         ItemType::ShellBox => "SHELA0",
         ItemType::Shotgun => "SHOTA0",
+        ItemType::Chaingun => "MGUNA0",  // chaingun pickup
+        ItemType::RocketLauncher => "LAUNA0", // rocket launcher pickup
+        ItemType::RocketBox => "BROKA0",  // box of rockets
     }
 }
 
@@ -579,10 +594,11 @@ fn render_sprites(
 
         let screen_x = SCREEN_WIDTH as i32 / 2 + (angle_diff * SCREEN_WIDTH as i32 / FOV);
 
+        let proj_sprite = if proj.sprite_id == 2 { "MISLA1" } else { "BAL1A0" };
         sprite_list.push(SpriteRender {
             screen_x,
             distance: dist,
-            sprite_name: "BAL1A0",
+            sprite_name: proj_sprite,
             floor_height: 500, // mid-air
         });
     }
@@ -771,6 +787,26 @@ fn render_weapon(state: &GameState, fb: &mut Framebuffer) {
                 "SHTGA0" // idle
             }
         }
+        WeaponType::Chaingun => {
+            // Reuse pistol sprites with faster cycling
+            if state.player.weapon_cooldown >= 1 {
+                "PISGE0" // flash
+            } else {
+                "PISGA0" // idle
+            }
+        }
+        WeaponType::RocketLauncher => {
+            // Reuse shotgun sprites (visually similar enough)
+            if state.player.weapon_cooldown >= 6 {
+                "SHTGD0"
+            } else if state.player.weapon_cooldown >= 3 {
+                "SHTGC0"
+            } else if state.player.weapon_cooldown >= 1 {
+                "SHTGB0"
+            } else {
+                "SHTGA0"
+            }
+        }
     };
 
     let sprite = match find_sprite(frame_name) {
@@ -837,8 +873,9 @@ fn render_stbar(state: &GameState, fb: &mut Framebuffer) {
     // Ammo — right-aligned in AMMO box (0-44)
     let ammo_display = match state.player.current_weapon {
         WeaponType::Fist => -1,
-        WeaponType::Pistol => state.player.ammo,
+        WeaponType::Pistol | WeaponType::Chaingun => state.player.ammo,
         WeaponType::Shotgun => state.player.shells,
+        WeaponType::RocketLauncher => state.player.rockets,
     };
     if ammo_display >= 0 {
         draw_sttnum(fb, 1, num_y, ammo_display, 3);
@@ -862,6 +899,12 @@ fn render_stbar(state: &GameState, fb: &mut Framebuffer) {
     // Row 2: Shells — current and max
     draw_tiny_yellow_num(fb, inv_lx, inv_y + row_h, state.player.shells);
     draw_tiny_yellow_num(fb, inv_rx, inv_y + row_h, 50);
+    // Row 3: Rockets — current and max
+    draw_tiny_yellow_num(fb, inv_lx, inv_y + row_h * 2, state.player.rockets);
+    draw_tiny_yellow_num(fb, inv_rx, inv_y + row_h * 2, 50);
+
+    // Status bar face — center panel (x=104..174)
+    render_stbar_face(state, fb, y_start);
 }
 
 /// Draw a number using STTNUM digit sprites from Freedoom WAD.
@@ -967,6 +1010,228 @@ fn draw_tiny_digit(fb: &mut Framebuffer, x: usize, y: usize, digit: u8) {
                 fb.set_rgb(x + col, y + row, color.0, color.1, color.2);
             }
         }
+    }
+}
+
+/// Render the DOOM-guy face in the center of the status bar.
+/// Shows different expressions based on health and recent damage.
+fn render_stbar_face(state: &GameState, fb: &mut Framebuffer, bar_y: usize) {
+    // Face sits in center panel of STBAR (x=104..174), centered
+    let face_x: usize = 139;  // center of 104..174
+    let face_y: usize = bar_y + 1;
+    let face_w: usize = 24;
+    let face_h: usize = 29;
+
+    // Choose face state
+    let recently_hurt = state.tick.saturating_sub(state.player.last_damage_tick) < 10;
+    let health = state.player.health;
+
+    // Background — flesh tone box
+    let bg = if !state.player.alive { (80, 0, 0) }
+        else if recently_hurt { (160, 60, 40) }
+        else { (140, 110, 80) };
+
+    for y in 0..face_h.min(30) {
+        for x in 0..face_w {
+            let px = face_x.saturating_sub(face_w / 2) + x;
+            let py = face_y + y;
+            if px < SCREEN_WIDTH && py < SCREEN_HEIGHT {
+                fb.set_rgb(px, py, bg.0, bg.1, bg.2);
+            }
+        }
+    }
+
+    let fx = face_x.saturating_sub(face_w / 2);
+    let fy = face_y;
+
+    if !state.player.alive {
+        // Dead face — X eyes, flat mouth
+        draw_face_pixel_block(fb, fx + 6, fy + 8, 3, 3, 160, 0, 0);   // left X eye
+        draw_face_pixel_block(fb, fx + 15, fy + 8, 3, 3, 160, 0, 0);  // right X eye
+        draw_face_pixel_block(fb, fx + 8, fy + 20, 8, 2, 100, 0, 0);  // flat mouth
+    } else if recently_hurt {
+        // Pain face — squinting eyes, open mouth
+        draw_face_pixel_block(fb, fx + 6, fy + 10, 4, 2, 40, 20, 10);  // left squint
+        draw_face_pixel_block(fb, fx + 14, fy + 10, 4, 2, 40, 20, 10); // right squint
+        draw_face_pixel_block(fb, fx + 9, fy + 18, 6, 4, 100, 20, 20); // open mouth
+        // Teeth
+        draw_face_pixel_block(fb, fx + 10, fy + 19, 4, 1, 220, 220, 200);
+    } else if health > 60 {
+        // Normal face — round eyes, slight grin
+        draw_face_pixel_block(fb, fx + 7, fy + 8, 3, 4, 255, 255, 255); // left eye white
+        draw_face_pixel_block(fb, fx + 14, fy + 8, 3, 4, 255, 255, 255); // right eye white
+        // Pupils shift based on player angle
+        let pupil_off = ((state.player.angle % 3142) > 1571) as usize;
+        draw_face_pixel_block(fb, fx + 7 + pupil_off, fy + 9, 2, 2, 30, 20, 10);
+        draw_face_pixel_block(fb, fx + 14 + pupil_off, fy + 9, 2, 2, 30, 20, 10);
+        // Grin
+        draw_face_pixel_block(fb, fx + 8, fy + 19, 8, 2, 120, 40, 30);
+        draw_face_pixel_block(fb, fx + 9, fy + 19, 6, 1, 200, 180, 160); // teeth
+    } else if health > 30 {
+        // Worried face — wider eyes, frown
+        draw_face_pixel_block(fb, fx + 6, fy + 7, 4, 5, 255, 255, 255);
+        draw_face_pixel_block(fb, fx + 14, fy + 7, 4, 5, 255, 255, 255);
+        draw_face_pixel_block(fb, fx + 7, fy + 8, 2, 3, 30, 20, 10);
+        draw_face_pixel_block(fb, fx + 15, fy + 8, 2, 3, 30, 20, 10);
+        draw_face_pixel_block(fb, fx + 9, fy + 20, 6, 2, 100, 40, 30);
+    } else {
+        // Critical face — bloodied, grimace
+        draw_face_pixel_block(fb, fx + 6, fy + 8, 4, 4, 200, 200, 200);
+        draw_face_pixel_block(fb, fx + 14, fy + 8, 4, 4, 200, 200, 200);
+        draw_face_pixel_block(fb, fx + 7, fy + 9, 2, 2, 30, 20, 10);
+        draw_face_pixel_block(fb, fx + 15, fy + 9, 2, 2, 30, 20, 10);
+        // Blood drip
+        draw_face_pixel_block(fb, fx + 11, fy + 5, 2, 8, 180, 0, 0);
+        draw_face_pixel_block(fb, fx + 8, fy + 20, 8, 3, 120, 20, 20);
+    }
+
+    // Nose (always)
+    if state.player.alive {
+        draw_face_pixel_block(fb, fx + 10, fy + 14, 4, 3, bg.0.saturating_sub(20), bg.1.saturating_sub(15), bg.2.saturating_sub(10));
+    }
+}
+
+/// Render a single sky pixel — gradient from dark blue to light blue, with stars.
+/// Scrolls horizontally with player angle for parallax.
+#[inline]
+fn render_sky_pixel(fb: &mut Framebuffer, col: usize, y: usize, player_angle: i32, view_mid: usize) {
+    // Vertical gradient: dark blue at top → lighter blue at horizon
+    let t = (y * 255) / view_mid.max(1);
+    let r = (t * 40 / 255) as u8;
+    let g = (t * 80 / 255) as u8;
+    let b = (60 + t * 140 / 255).min(200) as u8;
+
+    // Pseudo-random stars (deterministic based on screen position + angle scroll)
+    let scroll = (player_angle as usize / 10) % SCREEN_WIDTH;
+    let sx = (col + scroll) % SCREEN_WIDTH;
+    let star_hash = (sx * 7919 + y * 6271) % 997;
+    if star_hash < 8 && y < view_mid / 2 {
+        // Bright star
+        fb.set_rgb(col, y, 255, 255, 240);
+    } else {
+        fb.set_rgb(col, y, r, g, b);
+    }
+}
+
+/// Helper: draw a filled rectangle of pixels for the face.
+#[inline]
+fn draw_face_pixel_block(fb: &mut Framebuffer, x: usize, y: usize, w: usize, h: usize, r: u8, g: u8, b: u8) {
+    for dy in 0..h {
+        for dx in 0..w {
+            fb.set_rgb(x + dx, y + dy, r, g, b);
+        }
+    }
+}
+
+/// Render automap overlay — wireframe map with player position and enemies.
+pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
+    // Semi-transparent dark overlay
+    for y in 0..VIEW_HEIGHT {
+        for x in 0..SCREEN_WIDTH {
+            let off = (y * SCREEN_WIDTH + x) * 4;
+            if off + 3 < fb.rgba.len() {
+                fb.rgba[off] = fb.rgba[off] / 4;
+                fb.rgba[off + 1] = fb.rgba[off + 1] / 4;
+                fb.rgba[off + 2] = fb.rgba[off + 2] / 4;
+            }
+        }
+    }
+
+    let map_w = state.map.width as usize;
+    let map_h = state.map.height as usize;
+
+    // Scale to fit viewport
+    let cell_w = SCREEN_WIDTH / map_w;
+    let cell_h = VIEW_HEIGHT / map_h;
+    let cell = cell_w.min(cell_h).max(1);
+
+    let offset_x = (SCREEN_WIDTH - map_w * cell) / 2;
+    let offset_y = (VIEW_HEIGHT - map_h * cell) / 2;
+
+    // Draw grid
+    for gy in 0..map_h {
+        for gx in 0..map_w {
+            let tile = state.map.get_tile(gx as u32, gy as u32);
+            let sx = offset_x + gx * cell;
+            let sy = offset_y + gy * cell;
+
+            let (r, g, b) = match tile {
+                TileType::Wall(_) => (80, 80, 80),
+                TileType::Door(_) => (180, 130, 30),
+                TileType::Exit => (0, 200, 0),
+                TileType::Empty => (20, 20, 30),
+            };
+
+            for dy in 0..cell {
+                for dx in 0..cell {
+                    fb.set_rgb(sx + dx, sy + dy, r, g, b);
+                }
+            }
+
+            // Wall borders — draw right and bottom edges
+            if matches!(tile, TileType::Wall(_)) {
+                // Right edge
+                if gx + 1 < map_w && !matches!(state.map.get_tile(gx as u32 + 1, gy as u32), TileType::Wall(_)) {
+                    for dy in 0..cell {
+                        fb.set_rgb(sx + cell - 1, sy + dy, 160, 160, 160);
+                    }
+                }
+                // Bottom edge
+                if gy + 1 < map_h && !matches!(state.map.get_tile(gx as u32, gy as u32 + 1), TileType::Wall(_)) {
+                    for dx in 0..cell {
+                        fb.set_rgb(sx + dx, sy + cell - 1, 160, 160, 160);
+                    }
+                }
+            }
+        }
+    }
+
+    // Draw items (yellow dots)
+    for item in &state.items {
+        if item.picked_up { continue; }
+        let gx = (item.x / FP_SCALE) as usize;
+        let gy = (item.y / FP_SCALE) as usize;
+        let sx = offset_x + gx * cell + cell / 2;
+        let sy = offset_y + gy * cell + cell / 2;
+        fb.set_rgb(sx, sy, 255, 255, 0);
+        if cell > 2 {
+            fb.set_rgb(sx + 1, sy, 255, 255, 0);
+            fb.set_rgb(sx, sy + 1, 255, 255, 0);
+        }
+    }
+
+    // Draw enemies (red dots for alive, dark red for dead)
+    for enemy in &state.enemies {
+        let gx = (enemy.x / FP_SCALE) as usize;
+        let gy = (enemy.y / FP_SCALE) as usize;
+        let sx = offset_x + gx * cell + cell / 2;
+        let sy = offset_y + gy * cell + cell / 2;
+        let (r, g, b) = if enemy.is_alive() { (255, 0, 0) } else { (80, 0, 0) };
+        fb.set_rgb(sx, sy, r, g, b);
+        if cell > 2 {
+            fb.set_rgb(sx + 1, sy, r, g, b);
+            fb.set_rgb(sx, sy + 1, r, g, b);
+            fb.set_rgb(sx + 1, sy + 1, r, g, b);
+        }
+    }
+
+    // Draw player (green arrow)
+    let pgx = (state.player.x / FP_SCALE) as usize;
+    let pgy = (state.player.y / FP_SCALE) as usize;
+    let px = offset_x + pgx * cell + cell / 2;
+    let py = offset_y + pgy * cell + cell / 2;
+    // Player dot
+    for dy in 0..3usize {
+        for dx in 0..3usize {
+            fb.set_rgb(px.saturating_sub(1) + dx, py.saturating_sub(1) + dy, 0, 255, 0);
+        }
+    }
+    // Direction indicator
+    let angle = state.player.angle as f64 / 1000.0;
+    let tip_x = (px as f64 + angle.cos() * (cell as f64 * 1.5)) as usize;
+    let tip_y = (py as f64 + angle.sin() * (cell as f64 * 1.5)) as usize;
+    if tip_x < SCREEN_WIDTH && tip_y < VIEW_HEIGHT {
+        fb.set_rgb(tip_x, tip_y, 0, 255, 0);
     }
 }
 

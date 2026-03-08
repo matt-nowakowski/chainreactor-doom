@@ -244,7 +244,8 @@
                     <kbd>←</kbd><kbd>→</kbd> Turn<br>
                     <kbd>Space</kbd> Shoot<br>
                     <kbd>E</kbd> Use / Open door<br>
-                    <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Weapons<br>
+                    <kbd>1</kbd>-<kbd>5</kbd> Weapons<br>
+                    <kbd>Tab</kbd> Automap<br>
                     <kbd>Q</kbd> Next weapon<br>
                     <kbd>R</kbd> Restart
                 </div>
@@ -290,7 +291,7 @@
             // Key handlers
             document.addEventListener('keydown', (e) => {
                 keys[e.code] = true;
-                if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+                if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) {
                     e.preventDefault();
                 }
 
@@ -335,6 +336,9 @@
             if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; } // Fist
             if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; } // Pistol
             if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; } // Shotgun
+            if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; } // Chaingun
+            if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; } // Rocket Launcher
+            if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }       // Automap
             if (keys['KeyR']) {
                 window.restartGame();
             }

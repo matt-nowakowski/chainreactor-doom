@@ -56,6 +56,9 @@ impl DoomGame {
                 10 => Some(PlayerInput::Weapon1),
                 11 => Some(PlayerInput::Weapon2),
                 12 => Some(PlayerInput::Weapon3),
+                13 => Some(PlayerInput::Weapon4),
+                14 => Some(PlayerInput::Weapon5),
+                15 => Some(PlayerInput::ToggleAutomap),
                 _ => None,
             })
             .collect();
@@ -89,9 +92,14 @@ impl DoomGame {
             WeaponType::Fist => 0,
             WeaponType::Pistol => 1,
             WeaponType::Shotgun => 2,
+            WeaponType::Chaingun => 3,
+            WeaponType::RocketLauncher => 4,
         }
     }
     pub fn has_shotgun(&self) -> bool { self.state.player.has_shotgun }
+    pub fn has_chaingun(&self) -> bool { self.state.player.has_chaingun }
+    pub fn has_rocket_launcher(&self) -> bool { self.state.player.has_rocket_launcher }
+    pub fn player_rockets(&self) -> i32 { self.state.player.rockets }
     pub fn projectile_count(&self) -> usize { self.state.projectiles.len() }
     pub fn player_kills(&self) -> u32 { self.state.player.kills }
     pub fn player_alive(&self) -> bool { self.state.player.alive }

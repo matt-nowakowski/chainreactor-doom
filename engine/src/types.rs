@@ -16,6 +16,9 @@ pub enum PlayerInput {
     Weapon1,      // fist
     Weapon2,      // pistol
     Weapon3,      // shotgun
+    Weapon4,      // chaingun
+    Weapon5,      // rocket launcher
+    ToggleAutomap,
 }
 
 /// Tile types in the map grid.
@@ -144,6 +147,8 @@ pub enum WeaponType {
     Fist,
     Pistol,
     Shotgun,
+    Chaingun,
+    RocketLauncher,
 }
 
 /// Visual effect type for bullet puffs and blood splats.
@@ -183,13 +188,16 @@ pub enum ProjectileSource {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ItemType {
-    HealthPack,  // +25 health
-    Medikit,     // +50 health
-    AmmoClip,    // +10 ammo (pistol)
-    AmmoBox,     // +25 ammo (pistol)
-    ShellBox,    // +4 shells
-    Shotgun,     // gives shotgun + 8 shells
-    Armor,       // +50 armor
+    HealthPack,      // +25 health
+    Medikit,         // +50 health
+    AmmoClip,        // +10 ammo (pistol/chaingun)
+    AmmoBox,         // +25 ammo (pistol/chaingun)
+    ShellBox,        // +4 shells
+    Shotgun,         // gives shotgun + 8 shells
+    Chaingun,        // gives chaingun + 20 bullets
+    RocketLauncher,  // gives rocket launcher + 2 rockets
+    RocketBox,       // +5 rockets
+    Armor,           // +50 armor
     KeyRed,
     KeyBlue,
 }
@@ -286,6 +294,7 @@ pub struct Player {
     pub armor: i32,
     pub ammo: i32,
     pub shells: i32,  // shotgun ammo
+    pub rockets: i32, // rocket launcher ammo
     pub kills: u32,
     pub has_red_key: bool,
     pub has_blue_key: bool,
@@ -293,6 +302,10 @@ pub struct Player {
     pub weapon_cooldown: u8,
     pub current_weapon: WeaponType,
     pub has_shotgun: bool,
+    pub has_chaingun: bool,
+    pub has_rocket_launcher: bool,
+    pub show_automap: bool,
+    pub last_damage_tick: u64,  // tick when player last took damage (for face)
 }
 
 impl Player {
@@ -305,6 +318,7 @@ impl Player {
             armor: 0,
             ammo: 50,
             shells: 0,
+            rockets: 0,
             kills: 0,
             has_red_key: false,
             has_blue_key: false,
@@ -312,6 +326,10 @@ impl Player {
             weapon_cooldown: 0,
             current_weapon: WeaponType::Pistol,
             has_shotgun: false,
+            has_chaingun: false,
+            has_rocket_launcher: false,
+            show_automap: false,
+            last_damage_tick: 0,
         }
     }
 
