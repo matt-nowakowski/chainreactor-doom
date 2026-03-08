@@ -4,116 +4,242 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chain Reactor — Can it run DOOM?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --accent: #2563EB;
+            --accent-dim: rgba(37, 99, 235, 0.15);
+            --bg: #09090B;
+            --surface: #111113;
+            --surface-2: #18181B;
+            --border: #27272A;
+            --border-subtle: #1E1E21;
+            --text: #FAFAFA;
+            --text-muted: #A1A1AA;
+            --text-dim: #71717A;
+            --green: #22C55E;
+            --red: #EF4444;
+            --yellow: #EAB308;
+            --blue: #3B82F6;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: #0a0a0a;
-            color: #e0e0e0;
-            font-family: 'Courier New', monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
-        .header {
-            text-align: center;
-            padding: 20px 0 10px;
-        }
-        .header h1 {
-            font-size: 24px;
-            color: #ff4444;
-            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
-            letter-spacing: 2px;
-        }
-        .header .subtitle {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-        .game-container {
+
+        /* ─── NAV ─── */
+        nav {
             display: flex;
-            gap: 16px;
-            align-items: flex-start;
-            margin-top: 10px;
-        }
-        #game-canvas {
-            border: 2px solid #333;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            cursor: crosshair;
-            width: 640px;
-            height: 400px;
-        }
-        .side-panel {
-            width: 220px;
-            font-size: 13px;
-        }
-        .panel-section {
-            background: #111;
-            border: 1px solid #222;
-            padding: 12px;
-            margin-bottom: 8px;
-        }
-        .panel-section h3 {
-            color: #ff4444;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #222;
-            padding-bottom: 4px;
-        }
-        .stat-row {
-            display: flex;
+            align-items: center;
             justify-content: space-between;
-            margin-bottom: 4px;
+            padding: 0 32px;
+            height: 56px;
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            background: rgba(9, 9, 11, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 100;
         }
-        .stat-label { color: #888; }
-        .stat-value { color: #ccc; }
-        .stat-value.health { color: #44ff44; }
-        .stat-value.armor { color: #4488ff; }
-        .stat-value.ammo { color: #ffff44; }
-        .stat-value.kills { color: #ff4444; }
-        .bar {
-            height: 8px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            margin-bottom: 6px;
+
+        .logo {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            font-size: 15px;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .bar-fill {
-            height: 100%;
-            transition: width 0.1s;
-        }
-        .bar-fill.health { background: #44ff44; }
-        .bar-fill.armor { background: #4488ff; }
-        .bar-fill.ammo { background: #ffff44; }
-        .controls {
-            font-size: 11px;
-            line-height: 1.6;
-        }
-        .controls kbd {
-            background: #222;
-            border: 1px solid #444;
-            padding: 1px 5px;
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 10px;
-            color: #ccc;
+            font-weight: 700;
+            font-style: normal;
+            color: white;
+            letter-spacing: 0;
         }
-        .chain-info {
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        .nav-btn {
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            background: var(--accent);
+            border: none;
+            padding: 7px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-btn:hover { opacity: 0.85; }
+
+        /* ─── HERO ─── */
+        .hero {
+            text-align: center;
+            padding: 48px 24px 0;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            padding: 5px 14px;
+            border-radius: 999px;
+            margin-bottom: 20px;
         }
-        .chain-info .dot {
-            display: inline-block;
+
+        .hero-badge .pulse {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            margin-right: 4px;
+            background: var(--accent);
+            animation: pulse 2s ease-in-out infinite;
         }
-        .dot.live { background: #44ff44; }
-        .dot.off { background: #444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(2rem, 4.5vw, 3rem);
+            font-weight: 200;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 strong {
+            font-weight: 600;
+        }
+
+        .hero p {
+            font-size: 15px;
+            font-weight: 300;
+            color: var(--text-muted);
+            line-height: 1.7;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* ─── GAME SECTION ─── */
+        .game-section {
+            max-width: 1080px;
+            margin: 36px auto 0;
+            padding: 0 24px 64px;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 240px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        /* ─── GAME VIEWPORT ─── */
+        .viewport-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        .viewport-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 2;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 320 / 200;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            cursor: crosshair;
+        }
+
+        .viewport-hud {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .hud-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-dim);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
         .status-msg {
             text-align: center;
             padding: 8px;
             font-size: 18px;
+            font-family: 'JetBrains Mono', monospace;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -122,103 +248,329 @@
             text-shadow: 2px 2px 0 #000;
             z-index: 10;
         }
-        .game-over { color: #ff0000; }
-        .level-complete { color: #00ff00; }
-        .overlay {
-            position: relative;
-            display: inline-block;
+
+        .game-over { color: var(--red); }
+        .level-complete { color: var(--green); }
+
+        /* ─── SIDE PANEL ─── */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .fps-counter {
-            position: absolute;
-            top: 4px;
-            right: 4px;
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .card-header {
             font-size: 10px;
-            color: #888;
-            z-index: 5;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .minimap-canvas {
-            border: 1px solid #333;
+
+        .card-header .icon {
+            width: 14px;
+            height: 14px;
+            opacity: 0.5;
         }
-        .event-log {
-            font-size: 10px;
-            max-height: 80px;
-            overflow-y: auto;
-            color: #888;
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
         }
-        .event-log .event { margin-bottom: 2px; }
-        .event-log .kill { color: #ff4444; }
-        .event-log .pickup { color: #44ff44; }
-        .event-log .damage { color: #ff8800; }
-        footer {
-            margin-top: 16px;
-            padding: 12px;
-            font-size: 11px;
-            color: #444;
-            text-align: center;
-        }
-        footer a { color: #666; text-decoration: none; }
-        footer a:hover { color: #ff4444; }
-        .restart-btn {
-            background: #ff4444;
-            color: #000;
-            border: none;
-            padding: 6px 16px;
-            font-family: 'Courier New', monospace;
+
+        .stat-label {
             font-size: 12px;
+            font-weight: 400;
+            color: var(--text-dim);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .stat-value.health { color: var(--green); }
+        .stat-value.armor { color: var(--blue); }
+        .stat-value.ammo { color: var(--yellow); }
+        .stat-value.kills { color: var(--red); }
+
+        /* progress bars */
+        .bar {
+            height: 4px;
+            background: var(--surface-2);
+            border-radius: 2px;
+            margin: 4px 0 6px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.15s ease;
+        }
+
+        .bar-fill.health { background: var(--green); }
+        .bar-fill.armor { background: var(--blue); }
+        .bar-fill.ammo { background: var(--yellow); }
+
+        /* chain status */
+        .chain-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .chain-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .chain-dot.off { background: var(--text-dim); }
+
+        /* controls */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 10px;
+            font-size: 11px;
+            align-items: center;
+        }
+
+        .controls-grid .keys {
+            display: flex;
+            gap: 2px;
+            justify-self: end;
+        }
+
+        .controls-grid .action {
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        kbd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 5px;
+            line-height: 1;
+        }
+
+        .restart-btn {
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            background: var(--red);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 8px;
+            letter-spacing: 0.05em;
             display: none;
+            transition: opacity 0.2s;
         }
-        .restart-btn:hover { background: #ff6666; }
+
+        .restart-btn:hover { opacity: 0.85; }
+
+        /* minimap */
+        .minimap-canvas {
+            width: 100%;
+            border-radius: 6px;
+            image-rendering: pixelated;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-dim);
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        footer a:hover { color: var(--text); }
+
+        .footer-logo {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: -0.02em;
+            color: var(--text-dim);
+        }
+
+        /* ─── TECH SPECS BAR ─── */
+        .specs-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            padding: 16px 24px;
+            margin-top: 12px;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        .spec-item .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .spec-item code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--surface);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-up {
+            animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .fade-up.d1 { animation-delay: 0.05s; }
+        .fade-up.d2 { animation-delay: 0.12s; }
+        .fade-up.d3 { animation-delay: 0.2s; }
+        .fade-up.d4 { animation-delay: 0.3s; }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 860px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+            .side-panel {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .specs-bar { flex-wrap: wrap; gap: 16px; }
+            nav { padding: 0 16px; }
+            .nav-links a { display: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>⛓ CAN IT RUN DOOM? ⛓</h1>
-        <div class="subtitle">Game logic running on-chain — every tick is a block</div>
+
+    <nav>
+        <a class="logo" href="https://chainreactor.io">
+            <span class="logo-icon">CR</span>
+            Chainreactor
+        </a>
+        <div class="nav-links">
+            <a href="https://chainreactor.io">Platform</a>
+            <a href="https://chainreactor.io" class="nav-btn">Launch App</a>
+        </div>
+    </nav>
+
+    <div class="hero fade-up">
+        <div class="hero-badge">
+            <span class="pulse"></span>
+            Technical Demo
+        </div>
+        <h1>Can your blockchain <strong>run DOOM?</strong></h1>
+        <p>Full DOOM engine compiled to WASM, running deterministic game logic with fixed-point math. Every tick is a block. Every frame is verifiable.</p>
     </div>
 
-    <div class="game-container">
-        <div class="overlay">
-            <canvas id="game-canvas" width="320" height="200"></canvas>
-            <div class="fps-counter" id="fps">-- fps</div>
-            <div class="status-msg" id="status-msg"></div>
-        </div>
+    <div class="specs-bar fade-up d2">
+        <div class="spec-item"><code>320×200</code> framebuffer</div>
+        <div class="spec-item"><span class="dot"></span></div>
+        <div class="spec-item"><code>i32×1000</code> fixed-point</div>
+        <div class="spec-item"><span class="dot"></span></div>
+        <div class="spec-item"><code>no_std</code> compatible</div>
+        <div class="spec-item"><span class="dot"></span></div>
+        <div class="spec-item"><code>DDA</code> raycasting</div>
+    </div>
 
-        <div class="side-panel">
-            <div class="panel-section">
-                <h3>Player</h3>
-                <div class="stat-row">
-                    <span class="stat-label">Health</span>
-                    <span class="stat-value health" id="health">100</span>
+    <div class="game-section">
+        <div class="game-layout fade-up d3">
+            <div class="viewport-wrapper">
+                <canvas id="game-canvas" width="320" height="200"></canvas>
+                <div class="viewport-hud">
+                    <div class="hud-pill" id="fps">-- fps</div>
                 </div>
-                <div class="bar"><div class="bar-fill health" id="health-bar" style="width:100%"></div></div>
-
-                <div class="stat-row">
-                    <span class="stat-label">Armor</span>
-                    <span class="stat-value armor" id="armor">0</span>
-                </div>
-                <div class="bar"><div class="bar-fill armor" id="armor-bar" style="width:0%"></div></div>
-
-                <div class="stat-row">
-                    <span class="stat-label">Ammo</span>
-                    <span class="stat-value ammo" id="ammo">50</span>
-                </div>
-                <div class="bar"><div class="bar-fill ammo" id="ammo-bar" style="width:50%"></div></div>
-
-                <div class="stat-row">
-                    <span class="stat-label">Kills</span>
-                    <span class="stat-value kills" id="kills">0 / 6</span>
-                </div>
+                <div class="status-msg" id="status-msg"></div>
             </div>
 
-            <div class="panel-section">
-                <h3>Chain</h3>
-                <div class="chain-info">
+            <div class="side-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Player
+                    </div>
                     <div class="stat-row">
-                        <span class="stat-label"><span class="dot live" id="chain-dot"></span>Status</span>
+                        <span class="stat-label">Health</span>
+                        <span class="stat-value health" id="health">100</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill health" id="health-bar" style="width:100%"></div></div>
+                    <div class="stat-row">
+                        <span class="stat-label">Armor</span>
+                        <span class="stat-value armor" id="armor">0</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill armor" id="armor-bar" style="width:0%"></div></div>
+                    <div class="stat-row">
+                        <span class="stat-label">Ammo</span>
+                        <span class="stat-value ammo" id="ammo">50</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill ammo" id="ammo-bar" style="width:50%"></div></div>
+                    <div class="stat-row">
+                        <span class="stat-label">Kills</span>
+                        <span class="stat-value kills" id="kills">0 / 6</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        Chain
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><span class="chain-dot live" id="chain-dot"></span>Status</span>
                         <span class="stat-value" id="chain-status">Local</span>
                     </div>
                     <div class="stat-row">
@@ -230,33 +582,40 @@
                         <span class="stat-value" id="tick-num">0</span>
                     </div>
                 </div>
-            </div>
 
-            <div class="panel-section">
-                <h3>Minimap</h3>
-                <canvas id="minimap" class="minimap-canvas" width="192" height="192"></canvas>
-            </div>
-
-            <div class="panel-section">
-                <h3>Controls</h3>
-                <div class="controls">
-                    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move<br>
-                    <kbd>←</kbd><kbd>→</kbd> Turn<br>
-                    <kbd>Space</kbd> Shoot<br>
-                    <kbd>E</kbd> Use / Open door<br>
-                    <kbd>1</kbd>-<kbd>5</kbd> Weapons<br>
-                    <kbd>Tab</kbd> Automap<br>
-                    <kbd>Q</kbd> Next weapon<br>
-                    <kbd>R</kbd> Restart
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                        Controls
+                    </div>
+                    <div class="controls-grid">
+                        <span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+                        <span class="action">Move</span>
+                        <span class="keys"><kbd>←</kbd><kbd>→</kbd></span>
+                        <span class="action">Turn</span>
+                        <span class="keys"><kbd>Space</kbd></span>
+                        <span class="action">Shoot</span>
+                        <span class="keys"><kbd>E</kbd></span>
+                        <span class="action">Use / Open</span>
+                        <span class="keys"><kbd>1</kbd>–<kbd>5</kbd></span>
+                        <span class="action">Weapons</span>
+                        <span class="keys"><kbd>Tab</kbd></span>
+                        <span class="action">Automap</span>
+                        <span class="keys"><kbd>Q</kbd></span>
+                        <span class="action">Next weapon</span>
+                        <span class="keys"><kbd>R</kbd></span>
+                        <span class="action">Restart</span>
+                    </div>
                 </div>
-            </div>
 
-            <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+                <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+            </div>
         </div>
     </div>
 
     <footer>
-        Powered by <a href="#">Chain Reactor</a> — Substrate appchain infrastructure
+        <span class="footer-logo">Chainreactor</span>
+        <span>Substrate appchain infrastructure &mdash; <a href="https://chainreactor.io">chainreactor.io</a></span>
     </footer>
 
     <script type="module">
@@ -265,13 +624,12 @@
         let game;
         let wasmMemory;
         let canvas, ctx, imageData;
-        let minimapCanvas, minimapCtx;
         let keys = {};
         let lastFrameTime = 0;
         let frameCount = 0;
         let fpsDisplay = 0;
         let fpsTimer = 0;
-        const TICK_RATE = 15; // ticks per second (game speed)
+        const TICK_RATE = 15;
         let tickAccumulator = 0;
         let lastTickTime = 0;
 
@@ -285,23 +643,17 @@
             ctx.imageSmoothingEnabled = false;
             imageData = ctx.createImageData(320, 200);
 
-            minimapCanvas = document.getElementById('minimap');
-            minimapCtx = minimapCanvas.getContext('2d');
-
-            // Key handlers
             document.addEventListener('keydown', (e) => {
                 keys[e.code] = true;
                 if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) {
                     e.preventDefault();
                 }
 
-                // Title screen: any key starts game
                 if (game.is_title_screen()) {
                     game.start_game();
                     return;
                 }
 
-                // Death/victory: any key restarts
                 if (game.game_over() || game.level_complete()) {
                     window.restartGame();
                     return;
@@ -324,21 +676,21 @@
 
         function collectInputs() {
             const inputs = [];
-            if (keys['KeyW'] || keys['ArrowUp']) inputs.push(0);    // Forward
-            if (keys['KeyS'] || keys['ArrowDown']) inputs.push(1);  // Backward
-            if (keys['ArrowLeft']) inputs.push(2);                   // TurnLeft
-            if (keys['ArrowRight']) inputs.push(3);                  // TurnRight
-            if (keys['KeyA']) inputs.push(4);                        // StrafeLeft
-            if (keys['KeyD']) inputs.push(5);                        // StrafeRight
-            if (keys['Space']) inputs.push(6);                       // Shoot
-            if (keys['KeyE']) inputs.push(7);                        // Use
-            if (keys['KeyQ']) { inputs.push(8); keys['KeyQ'] = false; } // WeaponNext
-            if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; } // Fist
-            if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; } // Pistol
-            if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; } // Shotgun
-            if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; } // Chaingun
-            if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; } // Rocket Launcher
-            if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }       // Automap
+            if (keys['KeyW'] || keys['ArrowUp']) inputs.push(0);
+            if (keys['KeyS'] || keys['ArrowDown']) inputs.push(1);
+            if (keys['ArrowLeft']) inputs.push(2);
+            if (keys['ArrowRight']) inputs.push(3);
+            if (keys['KeyA']) inputs.push(4);
+            if (keys['KeyD']) inputs.push(5);
+            if (keys['Space']) inputs.push(6);
+            if (keys['KeyE']) inputs.push(7);
+            if (keys['KeyQ']) { inputs.push(8); keys['KeyQ'] = false; }
+            if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; }
+            if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; }
+            if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; }
+            if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
+            if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
+            if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }
             if (keys['KeyR']) {
                 window.restartGame();
             }
@@ -348,7 +700,6 @@
         function gameLoop(timestamp) {
             requestAnimationFrame(gameLoop);
 
-            // FPS counter
             frameCount++;
             if (timestamp - fpsTimer > 1000) {
                 fpsDisplay = frameCount;
@@ -357,7 +708,6 @@
                 document.getElementById('fps').textContent = fpsDisplay + ' fps';
             }
 
-            // Fixed tick rate — cap catch-up to 4 ticks max (prevents spiral of death)
             const dt = timestamp - lastTickTime;
             lastTickTime = timestamp;
             tickAccumulator += dt;
@@ -371,7 +721,6 @@
                     tickAccumulator -= tickInterval;
                 }
 
-                // Render every frame — zero-copy from WASM memory
                 game.render();
                 const ptr = game.rgba_ptr();
                 const len = game.rgba_len();
@@ -380,16 +729,11 @@
                 ctx.putImageData(imageData, 0, 0);
             } catch (e) {
                 console.error('Game error:', e);
-                // Reset game on unrecoverable error
                 game = new DoomGame();
                 tickAccumulator = 0;
             }
 
-            // Update HUD
             updateHUD();
-
-            // Update minimap
-            drawMinimap();
         }
 
         function updateHUD() {
@@ -405,59 +749,20 @@
             document.getElementById('ammo').textContent = ammo;
             document.getElementById('kills').textContent = kills + ' / ' + total;
             document.getElementById('tick-num').textContent = tick;
-            document.getElementById('block-num').textContent = tick; // 1 tick = 1 block
+            document.getElementById('block-num').textContent = tick;
 
             document.getElementById('health-bar').style.width = Math.max(0, health) + '%';
             document.getElementById('armor-bar').style.width = Math.max(0, armor) + '%';
             document.getElementById('ammo-bar').style.width = Math.min(100, ammo) + '%';
 
-            // Health color
             const healthEl = document.getElementById('health');
-            if (health > 50) healthEl.style.color = '#44ff44';
-            else if (health > 25) healthEl.style.color = '#ffff44';
-            else healthEl.style.color = '#ff4444';
+            if (health > 50) healthEl.style.color = 'var(--green)';
+            else if (health > 25) healthEl.style.color = 'var(--yellow)';
+            else healthEl.style.color = 'var(--red)';
 
-            // Show restart button on game over / level complete
-            // (The text overlay is rendered natively in the framebuffer)
             if (game.game_over() || game.level_complete()) {
                 document.getElementById('restart-btn').style.display = 'block';
             }
-        }
-
-        function drawMinimap() {
-            const mapW = 24;
-            const mapH = 24;
-            const cellSize = 8; // 192 / 24
-            minimapCtx.fillStyle = '#0a0a0a';
-            minimapCtx.fillRect(0, 0, 192, 192);
-
-            // We don't have direct tile access from WASM,
-            // so draw a static overlay based on the known E1M1 layout
-            // Player position
-            const px = game.player_x();
-            const py = game.player_y();
-            const pa = game.player_angle();
-
-            // Draw player
-            const playerScreenX = px * cellSize;
-            const playerScreenY = py * cellSize;
-
-            // Draw player dot
-            minimapCtx.fillStyle = '#44ff44';
-            minimapCtx.beginPath();
-            minimapCtx.arc(playerScreenX, playerScreenY, 3, 0, Math.PI * 2);
-            minimapCtx.fill();
-
-            // Draw player direction
-            minimapCtx.strokeStyle = '#44ff44';
-            minimapCtx.lineWidth = 1;
-            minimapCtx.beginPath();
-            minimapCtx.moveTo(playerScreenX, playerScreenY);
-            minimapCtx.lineTo(
-                playerScreenX + Math.cos(pa) * 12,
-                playerScreenY + Math.sin(pa) * 12
-            );
-            minimapCtx.stroke();
         }
 
         start();
