@@ -37,18 +37,17 @@
 
         /* ─── NAV ─── */
         nav {
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 24px;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 32px;
-            height: 56px;
-            border-bottom: 1px solid var(--border-subtle);
-            position: sticky;
-            top: 0;
-            background: rgba(9, 9, 11, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 100;
+            padding: 16px 0;
         }
 
         .logo {
@@ -56,28 +55,10 @@
             font-weight: 900;
             font-style: italic;
             text-transform: uppercase;
-            font-size: 15px;
+            font-size: 17px;
             letter-spacing: -0.02em;
             color: var(--text);
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            font-style: normal;
-            color: white;
-            letter-spacing: 0;
         }
 
         .nav-links {
@@ -86,23 +67,23 @@
             gap: 24px;
         }
 
-        .nav-links a {
-            font-size: 13px;
-            font-weight: 400;
-            color: var(--text-muted);
+        .nav-link {
+            font-size: 14px;
+            font-weight: 300;
+            color: var(--text-dim);
             text-decoration: none;
             transition: color 0.2s;
         }
 
-        .nav-links a:hover { color: var(--text); }
+        .nav-link:hover { color: var(--text); }
 
         .nav-btn {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 500;
             color: white;
-            background: var(--accent);
-            border: none;
-            padding: 7px 16px;
+            background: #1A1A1A;
+            border: 1px solid var(--border);
+            padding: 8px 20px;
             border-radius: 999px;
             cursor: pointer;
             text-decoration: none;
@@ -110,7 +91,7 @@
             font-family: 'Inter', sans-serif;
         }
 
-        .nav-btn:hover { opacity: 0.85; }
+        .nav-btn:hover { opacity: 0.8; }
 
         /* ─── HERO ─── */
         .hero {
@@ -401,31 +382,30 @@
         /* ─── FOOTER ─── */
         footer {
             border-top: 1px solid var(--border-subtle);
-            padding: 24px 32px;
+            padding: 0 24px;
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-dim);
-            max-width: 1080px;
-            margin: 0 auto;
+            padding: 32px 0;
         }
-
-        footer a {
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        footer a:hover { color: var(--text); }
 
         .footer-logo {
             font-family: 'Inter', sans-serif;
             font-weight: 900;
             font-style: italic;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 13px;
             letter-spacing: -0.02em;
+            color: var(--text-dim);
+        }
+
+        .footer-tagline {
+            font-size: 12px;
             color: var(--text-dim);
         }
 
@@ -498,13 +478,12 @@
 <body>
 
     <nav>
-        <a class="logo" href="https://chainreactor.io">
-            <span class="logo-icon">CR</span>
-            Chainreactor
-        </a>
-        <div class="nav-links">
-            <a href="https://chainreactor.io">Platform</a>
-            <a href="https://chainreactor.io" class="nav-btn">Launch App</a>
+        <div class="nav-inner">
+            <a class="logo" href="https://chainreactor.io">Chainreactor</a>
+            <div class="nav-links">
+                <a href="https://chainreactor.io/login" class="nav-link">Log in</a>
+                <a href="https://chainreactor.io/signup" class="nav-btn">Get Started</a>
+            </div>
         </div>
     </nav>
 
@@ -614,8 +593,10 @@
     </div>
 
     <footer>
-        <span class="footer-logo">Chainreactor</span>
-        <span>Substrate appchain infrastructure &mdash; <a href="https://chainreactor.io">chainreactor.io</a></span>
+        <div class="footer-inner">
+            <span class="footer-logo">Chainreactor</span>
+            <p class="footer-tagline">Built on Polkadot &middot; Powered by Substrate</p>
+        </div>
     </footer>
 
     <script type="module">
