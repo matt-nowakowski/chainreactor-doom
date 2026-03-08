@@ -909,15 +909,20 @@
             tctx.putImageData(td, 0, 0);
         }
 
-        // Animate title screen
+        // Animate title screen at 15 ticks/sec (matches WASM TICK_RATE)
         let titleTick = 0;
         let titleAnimId = null;
-        function animateTitle() {
+        let titleLastTime = 0;
+        const TITLE_TICK_MS = 1000 / 15; // 66.7ms per tick
+        function animateTitle(now) {
             if (!onTitleScreen) { titleAnimId = null; return; }
-            renderTitleScreen(titleTick++);
+            if (now - titleLastTime >= TITLE_TICK_MS) {
+                titleLastTime = now;
+                renderTitleScreen(titleTick++);
+            }
             titleAnimId = requestAnimationFrame(animateTitle);
         }
-        animateTitle();
+        requestAnimationFrame(animateTitle);
 
         // ═══ SCROLL REVEAL ═══
         const observer = new IntersectionObserver((entries) => {
