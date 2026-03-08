@@ -6,6 +6,7 @@ description = "RPC extension for on-chain DOOM — serves rendered frames to bro
 
 [dependencies]
 doom-runtime-api = { path = "../doom-runtime-api" }
+doom-engine = { path = "../engine", features = ["std"] }
 codec = { package = "parity-scale-codec", version = "3" }
 jsonrpsee = { version = "0.16", features = ["server", "macros"] }
 sp-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }

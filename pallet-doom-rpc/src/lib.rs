@@ -75,17 +75,22 @@ where
         let api = self.client.runtime_api();
         let best = self.client.info().best_hash;
 
-        let frame = api.render_frame(best, player).map_err(|e| {
+        // Get game state from runtime (works in WASM context)
+        let state = api.game_state(best, player).map_err(|e| {
             jsonrpsee::core::Error::Custom(format!("Runtime API error: {:?}", e))
         })?;
 
-        if frame.is_empty() {
-            return Err(jsonrpsee::core::Error::Custom(
+        match state {
+            Some(state) => {
+                // Render locally in RPC handler (native context — always has std)
+                let mut fb = doom_engine::Framebuffer::new();
+                doom_engine::render_frame(&state, &mut fb);
+                Ok(to_hex(&fb.rgba))
+            }
+            None => Err(jsonrpsee::core::Error::Custom(
                 "No active game for this player".to_string(),
-            ));
+            )),
         }
-
-        Ok(to_hex(&frame))
     }
 
     fn get_state(&self, player: AccountId) -> RpcResult<Option<String>> {
