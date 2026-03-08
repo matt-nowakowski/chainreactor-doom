@@ -110,30 +110,44 @@ Target: full Chocolate Doom (vanilla DOOM engine) parity, running deterministica
 | Feature | Status | Notes |
 |---|---|---|
 | Deterministic tick execution | Done | Same inputs → same state, always |
-| Compact state serialization | Done | Serde for full GameState |
-| WASM compilation | Done | wasm-pack, runs in browser |
-| Block-per-tick mapping | Done | Each game tick = one block |
-| Substrate pallet integration | Planned | Game state in on-chain storage |
-| Extrinsic-based input | Planned | Player inputs as signed transactions |
+| Compact state serialization | Done | Serde + SCALE codec for full GameState |
+| WASM compilation | Done | wasm-pack (browser) + wasm32 runtime |
+| Block-per-tick mapping | Done | Each game tick = one block via `on_initialize` |
+| Substrate pallet integration | Done | `pallet-doom` with StorageMap per player |
+| Extrinsic-based input | Done | `submit_input` extrinsic, max 16 inputs per call |
+| Runtime API + RPC | Done | `doom_renderFrame`, `doom_getState`, `doom_hasActiveGame` |
+| Validator-side rendering | Done | Raycasting runs in native RPC context, streams RGBA to browser |
+| Player cap enforcement | Done | Max 32 concurrent via BoundedVec |
 | State proof verification | Planned | Merkle proof of game state per block |
 | Multi-player consensus | Planned | Multiple players, same deterministic world |
 | Replay verification | Planned | Anyone can re-execute and verify outcomes |
-| Gas metering | Planned | Bounded execution per tick for block weight |
+| Gas metering / weight bounds | Planned | Bounded execution per tick for block weight |
+
+## On-Chain Resilience (TODO)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Idle player timeout | Planned | Remove games with no input for N blocks to stop wasting tick time |
+| Graceful player cap UI | Planned | Browser checks `ActivePlayers` count before allowing "New Game" |
+| Chain overload detection | Planned | Monitor block production lag, auto-pause ticks if falling behind |
+| Configurable player cap | Planned | Sudo-adjustable max players (start low, raise as we benchmark) |
+| Game cleanup extrinsic | Planned | Allow players or sudo to end stale/abandoned games |
+| Weight metering for on_initialize | Planned | Report actual tick cost so runtime can throttle if needed |
 
 ---
 
 ## Priority Order (recommended implementation sequence)
 
-1. **Chaingun + Rocket Launcher** — biggest gameplay variety boost
-2. **Exploding barrels** — already have barrel props, just need damage logic
-3. **Secret walls** — simple Use-key check on marked wall tiles
-4. **Cacodemon + Baron** — flying enemy + tank enemy for difficulty curve
-5. **Elevators / Lifts** — core DOOM level design mechanic
-6. **Damaging floors** — nukage/lava sectors
-7. **Switches** — remote door/lift triggers
-8. **Teleporters** — sector links
-9. **Plasma Rifle + BFG** — endgame weapons
-10. **Additional enemies** — Revenant, Mancubus, Arch-Vile
-11. **Sound system** — Web Audio API integration
-12. **Multiple levels** — E1M1–M3 at minimum
-13. **Substrate pallet** — move game loop on-chain for real
+1. **On-chain resilience** — idle timeout, weight metering, configurable cap (safety first)
+2. **Chaingun + Rocket Launcher** — biggest gameplay variety boost
+3. **Exploding barrels** — already have barrel props, just need damage logic
+4. **Secret walls** — simple Use-key check on marked wall tiles
+5. **Cacodemon + Baron** — flying enemy + tank enemy for difficulty curve
+6. **Elevators / Lifts** — core DOOM level design mechanic
+7. **Damaging floors** — nukage/lava sectors
+8. **Switches** — remote door/lift triggers
+9. **Teleporters** — sector links
+10. **Plasma Rifle + BFG** — endgame weapons
+11. **Additional enemies** — Revenant, Mancubus, Arch-Vile
+12. **Sound system** — Web Audio API integration
+13. **Multiple levels** — E1M1–M3 at minimum
