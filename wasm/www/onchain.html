@@ -188,6 +188,45 @@
         }
         .controls-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
 
+        .title-screen {
+            position: absolute; inset: 0;
+            background: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 30; cursor: pointer;
+            image-rendering: pixelated;
+        }
+        .title-screen.hidden { display: none; }
+        .title-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700; text-transform: uppercase;
+            letter-spacing: 4px; text-align: center;
+        }
+        .title-logo-line1 {
+            font-size: 42px; color: #C02020;
+            text-shadow: 2px 2px 0 #600, -1px -1px 0 #F44;
+        }
+        .title-logo-line2 {
+            font-size: 42px; color: #C02020;
+            text-shadow: 2px 2px 0 #600, -1px -1px 0 #F44;
+            margin-top: -4px;
+        }
+        .title-press-key {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #A0A0A0;
+            margin-top: 24px; letter-spacing: 2px;
+            animation: blink-text 1s step-end infinite;
+        }
+        @keyframes blink-text {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .title-red-band {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            width: 85%; height: 100px;
+            background: rgba(30, 0, 0, 1);
+            z-index: -1;
+        }
         .connect-overlay {
             position: absolute; inset: 0; z-index: 15;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -576,10 +615,15 @@
                         <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
                     </div>
 
-                    <!-- Connect overlay -->
-                    <div class="connect-overlay" id="connect-overlay">
-                        <div class="connect-status" id="connect-status">Ready to connect</div>
-                        <button class="connect-btn" id="connect-btn" onclick="connectAndPlay()">Start Game</button>
+                    <!-- Title screen overlay (matches engine's render_title_screen) -->
+                    <div class="title-screen" id="title-screen">
+                        <div class="title-red-band"></div>
+                        <div class="title-logo">
+                            <div class="title-logo-line1">CHAIN</div>
+                            <div class="title-logo-line2">REACTOR</div>
+                        </div>
+                        <div class="title-press-key">PRESS ANY KEY</div>
+                        <div class="connect-status" id="connect-status" style="margin-top:12px;"></div>
                         <div class="connect-error" id="connect-error"></div>
                     </div>
 
@@ -776,7 +820,8 @@
         const IDLE_TIMEOUT_MS = 120000; // 2 minutes with no input → auto-reset
         let lastInputTime = 0;
         let gameEnded = false; // true when player died or completed level
-        let lastFrameHex = null; // cache last frame for death/victory freeze
+        let onTitleScreen = true; // true until first keypress
+        let titleKeyListener = null; // keydown listener for title screen
 
         // ═══ DOM ═══
         const canvas = document.getElementById('game-canvas');
@@ -794,10 +839,33 @@
         document.addEventListener('keydown', (e) => {
             if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
             if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
+
+            // Title screen: any key starts the game
+            if (onTitleScreen) {
+                onTitleScreen = false;
+                connectAndPlay();
+                return;
+            }
+
+            // Game ended: any key restarts
+            if (gameEnded) {
+                gameEnded = false;
+                restartGame();
+                return;
+            }
+
             keys[e.code] = true;
             resetIdleTimer();
         });
         document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+        // Title screen click also starts
+        document.getElementById('title-screen').addEventListener('click', () => {
+            if (onTitleScreen) {
+                onTitleScreen = false;
+                connectAndPlay();
+            }
+        });
 
         function collectInputs() {
             const inputs = [];
@@ -903,13 +971,18 @@
 
         // ═══ GAME STATE MONITORING ═══
         async function checkGameState() {
+            if (gameEnded) return;
             try {
-                const hasGame = await rpcCall('doom_hasActiveGame', [account.address]);
-                if (!hasGame && gameActive) {
-                    // Game was removed (timeout, crash, etc.)
+                // Check if player is still in ActivePlayers
+                const active = await api.query.doom.activePlayers();
+                const stillActive = active.some(a => a.toString() === account.address);
+
+                if (!stillActive && gameActive) {
+                    // Player removed from ActivePlayers → died or completed level
+                    // Fetch one last frame (will have death/victory overlay baked in)
+                    await fetchAndRenderFrame();
+                    gameEnded = true;
                     gameActive = false;
-                    showWarning('Game session ended — start a new game', 'info');
-                    document.getElementById('restart-btn').style.display = 'block';
                 }
             } catch (e) {
                 // Ignore — will retry next block
@@ -935,11 +1008,8 @@
                         totalExtSent++;
                         document.getElementById('ext-count').textContent = totalExtSent;
                         gameActive = false;
-                        // Show reconnect overlay
-                        document.getElementById('connect-overlay').classList.remove('hidden');
-                        document.getElementById('connect-status').textContent = 'Game reset (idle timeout) — click to play again';
-                        document.getElementById('connect-btn').disabled = false;
-                        document.getElementById('connect-btn').textContent = 'Start Game';
+                        onTitleScreen = true;
+                        document.getElementById('title-screen').classList.remove('hidden');
                         hideWarning();
                     } catch (e) {
                         console.warn('Idle reset failed:', e.message);
@@ -950,7 +1020,7 @@
 
         // ═══ FRAME RENDERING ═══
         async function fetchAndRenderFrame() {
-            if (gameEnded) return; // stop fetching after death/victory
+            if (gameEnded) return; // freeze last frame on death/victory
 
             try {
                 const startTime = performance.now();
@@ -959,15 +1029,8 @@
                 document.getElementById('latency').textContent = latency + ' ms';
 
                 if (!hexData || hexData === '0x' || hexData.length < 10) {
-                    // Game may have ended (pallet removed player from ActivePlayers)
-                    if (totalFrames > 0 && !gameEnded) {
-                        gameEnded = true;
-                        showGameEndOverlay();
-                    }
                     return;
                 }
-
-                lastFrameHex = hexData;
 
                 // Decode hex RGBA → canvas
                 const hex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
@@ -983,38 +1046,11 @@
                     document.getElementById('frame-count').textContent = totalFrames;
                 }
             } catch (e) {
-                // RPC error "No active game" means game ended
-                if (e.message && e.message.includes('No active game') && totalFrames > 0) {
-                    gameEnded = true;
-                    showGameEndOverlay();
-                }
+                // Silent fail — will retry next block
             }
         }
 
-        function showGameEndOverlay() {
-            gameActive = false;
-            const overlay = document.createElement('div');
-            overlay.id = 'game-end-overlay';
-            overlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:50;';
-            overlay.innerHTML = `
-                <div style="color:#EF4444;font-size:28px;font-weight:900;font-style:italic;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">GAME OVER</div>
-                <div style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Press any key or click to restart</div>
-            `;
-            canvas.parentElement.style.position = 'relative';
-            canvas.parentElement.appendChild(overlay);
-
-            const restart = () => {
-                overlay.remove();
-                document.removeEventListener('keydown', restart);
-                restartGame();
-            };
-            overlay.addEventListener('click', restart);
-            document.addEventListener('keydown', restart);
-        }
-
         async function restartGame() {
-            gameEnded = false;
-            gameActive = false;
             document.getElementById('status-msg').textContent = 'Restarting...';
             try {
                 await new Promise((resolve, reject) => {
@@ -1036,6 +1072,7 @@
                     }).catch(reject);
                 });
                 gameActive = true;
+                gameEnded = false;
                 document.getElementById('status-msg').textContent = '';
                 resetIdleTimer();
             } catch (e) {
@@ -1099,10 +1136,10 @@
                     resetStallTimer();
 
                     // Fetch frame on each new block
-                    if (gameActive) {
+                    if (gameActive && !gameEnded) {
                         fetchAndRenderFrame();
-                        // Periodic game state check (every 10 blocks)
-                        if (blockNum % 10 === 0) checkGameState();
+                        // Check if game ended (every 5 blocks = 1 sec at 200ms)
+                        if (blockNum % 5 === 0) checkGameState();
                     }
 
                     // Periodic player cap refresh (every 20 blocks)
@@ -1164,12 +1201,11 @@
 
         // ═══ CONNECT AND PLAY ═══
         async function connectAndPlay() {
-            const btn = document.getElementById('connect-btn');
             const statusEl = document.getElementById('connect-status');
             const errorEl = document.getElementById('connect-error');
 
-            btn.disabled = true;
             errorEl.textContent = '';
+            statusEl.textContent = 'Connecting...';
             updateConnectionUI('connecting');
 
             try {
@@ -1204,8 +1240,7 @@
                 const hasSlot = await checkPlayerCap();
                 if (!hasSlot) {
                     errorEl.textContent = 'Game full — ' + MAX_PLAYERS + '/' + MAX_PLAYERS + ' players active';
-                    btn.disabled = false;
-                    btn.textContent = 'Retry';
+                    onTitleScreen = true; // allow retry on keypress
                     statusEl.textContent = 'No slots available';
                     return;
                 }
@@ -1248,13 +1283,13 @@
                 // Step 8: Input loop — one submit per block (200ms)
                 setInterval(submitInputs, 200);
 
-                // Hide overlay
-                document.getElementById('connect-overlay').classList.add('hidden');
+                // Hide title screen
+                document.getElementById('title-screen').classList.add('hidden');
 
             } catch (e) {
                 console.error('Connection failed:', e);
                 errorEl.textContent = e.message || 'Connection failed';
-                btn.disabled = false;
+                onTitleScreen = true; // allow retry
                 updateConnectionUI('disconnected');
                 statusEl.textContent = 'Failed — click to retry';
             }
@@ -1263,17 +1298,7 @@
         // ═══ RESTART ═══
         window.restartGame = async () => {
             if (!api || !account) return;
-            try {
-                await api.tx.doom.resetGame().signAndSend(account, { nonce: -1 });
-                totalExtSent++;
-                await api.tx.doom.newGame().signAndSend(account, { nonce: -1 });
-                totalExtSent++;
-                document.getElementById('ext-count').textContent = totalExtSent;
-                document.getElementById('status-msg').textContent = '';
-                document.getElementById('restart-btn').style.display = 'none';
-            } catch (e) {
-                console.warn('Restart failed:', e.message);
-            }
+            restartGame();
         };
 
         // ═══ INIT ═══
