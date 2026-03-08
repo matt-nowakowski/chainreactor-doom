@@ -224,6 +224,16 @@ pub fn render_frame(state: &GameState, fb: &mut Framebuffer) {
         }
     }
 
+    // 3b. Sky cleanup — fill any remaining ceiling gaps above sky-sector walls
+    for col in 0..SCREEN_WIDTH {
+        let wc = &wall_cols[col];
+        if wc.hit_sector_has_sky {
+            for y in 0..wc.draw_start {
+                render_sky_pixel(fb, col, y, state.player.angle, view_mid as usize);
+            }
+        }
+    }
+
     // 4. Render sprites (enemies + items + projectiles + decorations)
     render_sprites(state, fb, &depth_buf, player_floor);
 
@@ -1074,7 +1084,7 @@ fn render_stbar_face(state: &GameState, fb: &mut Framebuffer, bar_y: usize) {
     let h = face.height as usize;
 
     // Center in the STBAR center panel (x=104..174)
-    let center_x: usize = 154;
+    let center_x: usize = 159;
     let fx = center_x.saturating_sub(w / 2);
     let fy = bar_y + 2;
 
@@ -1171,30 +1181,7 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
                     }
                 }
             }
-            // Left edge (boundary)
-            if gx == 0 && is_wall {
-                for dy in 0..cell {
-                    fb.set_rgb(sx, sy + dy, 180, 0, 0);
-                }
-            }
-            // Top edge (boundary)
-            if gy == 0 && is_wall {
-                for dx in 0..cell {
-                    fb.set_rgb(sx + dx, sy, 180, 0, 0);
-                }
-            }
-            // Right edge (boundary)
-            if gx == map_w - 1 && is_wall {
-                for dy in 0..cell {
-                    fb.set_rgb(sx + cell, sy + dy, 180, 0, 0);
-                }
-            }
-            // Bottom edge (boundary)
-            if gy == map_h - 1 && is_wall {
-                for dx in 0..cell {
-                    fb.set_rgb(sx + dx, sy + cell, 180, 0, 0);
-                }
-            }
+            // (boundary edges handled by perimeter border below)
 
             // Exit marker — green filled
             if is_exit {
@@ -1205,6 +1192,20 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
                 }
             }
         }
+    }
+
+    // Draw clean 1px perimeter border around entire map
+    let bx0 = offset_x.saturating_sub(1);
+    let by0 = offset_y.saturating_sub(1);
+    let bx1 = offset_x + map_w * cell;
+    let by1 = offset_y + map_h * cell;
+    for x in bx0..=bx1.min(SCREEN_WIDTH - 1) {
+        fb.set_rgb(x, by0, 180, 0, 0);
+        if by1 < VIEW_HEIGHT { fb.set_rgb(x, by1, 180, 0, 0); }
+    }
+    for y in by0..=by1.min(VIEW_HEIGHT - 1) {
+        fb.set_rgb(bx0, y, 180, 0, 0);
+        if bx1 < SCREEN_WIDTH { fb.set_rgb(bx1, y, 180, 0, 0); }
     }
 
     // Draw things — triangular markers like OG DOOM
