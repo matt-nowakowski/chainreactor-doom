@@ -25,7 +25,59 @@
             --blue: #3B82F6;
         }
 
+        /* Light mode — matches chainreactor.io landing page */
+        [data-theme="light"] {
+            --bg: #FFFFFF;
+            --surface: #F9F9F9;
+            --surface-2: #F1F1F1;
+            --border: #E5E5E5;
+            --border-subtle: #EBEBEB;
+            --text: #1A1A1A;
+            --text-muted: #6B6B6B;
+            --text-dim: #999999;
+            --accent-dim: rgba(37, 99, 235, 0.08);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Cinema dim transition — smooth light→dark */
+        .cinema-dim { transition: background-color 1.8s ease, color 1.8s ease; }
+        .cinema-dim nav,
+        .cinema-dim footer,
+        .cinema-dim .card,
+        .cinema-dim .feature-card,
+        .cinema-dim .section,
+        .cinema-dim .hero,
+        .cinema-dim .hero h1,
+        .cinema-dim .hero p,
+        .cinema-dim .spec-item,
+        .cinema-dim .section-header,
+        .cinema-dim .section-header h2,
+        .cinema-dim .feature-title,
+        .cinema-dim .feature-desc,
+        .cinema-dim .feature-label,
+        .cinema-dim .cta-title,
+        .cinema-dim .cta-desc,
+        .cinema-dim .cta-btn,
+        .cinema-dim .stat-label,
+        .cinema-dim .stat-value,
+        .cinema-dim .block-item,
+        .cinema-dim .logo,
+        .cinema-dim .nav-link,
+        .cinema-dim .footer-logo,
+        .cinema-dim .footer-tagline,
+        .cinema-dim .cta-box,
+        .cinema-dim .cta-box h2,
+        .cinema-dim .cta-box p,
+        .cinema-dim .cta-link,
+        .cinema-dim .demo-label span,
+        .cinema-dim .block-entry,
+        .cinema-dim .block-num,
+        .cinema-dim .block-hash,
+        .cinema-dim .card-header,
+        .cinema-dim kbd {
+            transition: background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease;
+        }
 
         body {
             background: var(--bg);
@@ -236,7 +288,7 @@
 
         .block-feed {
             display: flex; flex-direction: column; gap: 4px;
-            max-height: 200px; overflow-y: auto;
+            max-height: 135px; overflow-y: auto;
         }
         .block-feed::-webkit-scrollbar { width: 3px; }
         .block-feed::-webkit-scrollbar-track { background: transparent; }
@@ -268,6 +320,7 @@
             letter-spacing: 0.05em; display: none; transition: opacity 0.2s;
         }
         .restart-btn:hover { opacity: 0.85; }
+
 
         /* ─── FEATURES SECTION ─── */
         .features-grid {
@@ -436,8 +489,8 @@
         .cta-link svg { width: 14px; height: 14px; }
 
         .cta-btn {
-            font-size: 13px; font-weight: 500; color: white;
-            background: #FAFAFA; color: var(--bg);
+            font-size: 13px; font-weight: 500;
+            background: var(--text); color: var(--bg);
             padding: 10px 24px; border-radius: 999px;
             text-decoration: none; transition: opacity 0.2s;
             font-family: 'Inter', sans-serif;
@@ -471,11 +524,11 @@
         .modal-close:hover { background: var(--border); color: var(--text); }
 
         .controls-grid {
-            display: grid; grid-template-columns: auto 1fr;
-            gap: 6px 14px; font-size: 12px; align-items: center;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px 20px; font-size: 12px; align-items: center;
         }
-        .controls-grid .keys { display: flex; gap: 3px; justify-self: end; }
-        .controls-grid .action { color: var(--text-dim); font-weight: 400; }
+        .controls-grid .keys { display: flex; gap: 3px; justify-content: flex-end; }
+        .controls-grid .action { color: var(--text-dim); font-weight: 400; text-align: left; }
 
         kbd {
             font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
@@ -539,6 +592,34 @@
     </style>
 </head>
 <body>
+    <script>
+    // Cinema dim: light → dark transition on first visit (resets every 24h)
+    (function() {
+        var CINEMA_KEY = 'cr_doom_cinema';
+        var TTL = 24 * 60 * 60 * 1000; // 24 hours
+        var stored = localStorage.getItem(CINEMA_KEY);
+        var needsCinema = !stored || (Date.now() - parseInt(stored, 10)) > TTL;
+
+        if (needsCinema) {
+            // Start in light mode — set attribute before first paint
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.addEventListener('DOMContentLoaded', function() {
+                // Brief flash of light, then dim like cinema lights
+                setTimeout(function() {
+                    document.body.classList.add('cinema-dim');
+                    requestAnimationFrame(function() {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem(CINEMA_KEY, Date.now().toString());
+                        // Clean up transition class after animation completes
+                        setTimeout(function() {
+                            document.body.classList.remove('cinema-dim');
+                        }, 2200);
+                    });
+                }, 600);
+            });
+        }
+    })();
+    </script>
 
     <!-- ═══ NAV ═══ -->
     <nav>
@@ -558,7 +639,7 @@
             Technical Demo
         </div>
         <h1>Can your blockchain<br><strong>run DOOM?</strong></h1>
-        <p>The entire game — engine, physics, AI, rendering — runs inside a Substrate runtime. Every tick executes on-chain. Every frame is rendered by validators and served to players via RPC. No client-side logic. Pure on-chain gaming.</p>
+        <p>The entire game runs on-chain. Physics, AI, enemy logic, collision detection — all executed inside a Substrate runtime by validators. Frames are rendered by the chain and streamed to your browser. Your device is just a screen. Zero client-side game logic.</p>
         <div class="specs-bar fade-up d2">
             <div class="spec-item"><code>320×200</code> framebuffer</div>
             <div class="spec-item"><span class="dot"></span></div>
@@ -611,7 +692,7 @@
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card card-blocks">
                         <div class="card-header">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                             Latest Blocks
@@ -654,7 +735,7 @@
         <div class="section-inner">
             <div class="section-header reveal">
                 <h2>How it works</h2>
-                <p>Substrate's runtime architecture makes it possible to run complex real-time applications entirely on-chain.</p>
+                <p>Your browser sends keypresses. The chain does everything else.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card reveal">
@@ -662,7 +743,7 @@
                         <p class="feature-label">Execution</p>
                         <h3 class="feature-title">Deterministic runtime</h3>
                     </div>
-                    <p class="feature-desc">All game logic uses integer-only fixed-point math, guaranteeing identical output across every validator. No floating point, no divergence, no consensus failures.</p>
+                    <p class="feature-desc">Every game tick is a state transition executed identically by every validator. Integer-only fixed-point math — no floating point, no divergence. The same inputs always produce the same game state, block after block.</p>
                     <div class="feature-visual">
                         <div class="det-grid">
                             <div class="det-dot" style="animation-delay:0s"></div>
@@ -688,9 +769,9 @@
                 <div class="feature-card reveal" style="transition-delay: 0.08s">
                     <div>
                         <p class="feature-label">Infrastructure</p>
-                        <h3 class="feature-title">Block-per-tick pipeline</h3>
+                        <h3 class="feature-title">Validators render your frames</h3>
                     </div>
-                    <p class="feature-desc">Each game tick maps to a Substrate block. Player inputs are submitted as extrinsics, state transitions execute in the runtime, and the framebuffer is stored on-chain and served via RPC.</p>
+                    <p class="feature-desc">Player inputs are submitted as extrinsics. The game state is ticked on-chain every block. When your browser needs a frame, a validator raycasts the scene, composites sprites, and streams back raw pixels. Your device just paints them to screen.</p>
                     <div class="feature-visual">
                         <div class="block-strip">
                             <div class="bar"></div>
@@ -710,7 +791,7 @@
                         <p class="feature-label">Substrate</p>
                         <h3 class="feature-title">Custom pallet architecture</h3>
                     </div>
-                    <p class="feature-desc">Substrate's modular pallet system means the DOOM engine is just another runtime module — composable with staking, governance, and token pallets on the same chain.</p>
+                    <p class="feature-desc">The DOOM engine is a Substrate pallet — a runtime module that sits alongside staking, governance, and token pallets. Each player gets an independent on-chain game state. Up to 32 concurrent players per chain.</p>
                     <div class="feature-visual">
                         <div class="chain-links">
                             <div class="chain-link"></div>
@@ -736,7 +817,7 @@
         <div class="section-inner">
             <div class="cta-box reveal">
                 <h2>Ready to build?</h2>
-                <p>If Substrate can run DOOM, imagine what it can do for your project. Launch a production-grade appchain in minutes.</p>
+                <p>If Substrate can run DOOM — with real-time physics, AI, and rendering — imagine what it can do for your project. Launch a production-grade appchain in minutes.</p>
                 <div class="cta-actions">
                     <a href="https://chainreactor.io/signup" class="cta-link">
                         Launch your chain
@@ -800,6 +881,7 @@
         let totalExtrinsics = 0, totalEvents = 0, totalStorageWrites = 0;
 
         function blockHash(n) {
+            n = Number(n);
             let h = (n * 2654435761) >>> 0;
             return '0x' + h.toString(16).padStart(8, '0') + '...' +
                    ((h ^ 0xDEAD) >>> 0).toString(16).padStart(4, '0').slice(0, 4);
@@ -841,7 +923,7 @@
                 if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
                 if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
                 if (game.is_title_screen()) { game.start_game(); return; }
-                if (game.game_over() || game.level_complete()) { window.restartGame(); return; }
+                if (game.game_over()) { window.restartGame(); return; }
             });
             document.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
@@ -875,7 +957,7 @@
             if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
             if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
             if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }
-            if (keys['KeyR']) window.restartGame();
+            if (keys['KeyR'] && !game.level_complete()) window.restartGame();
             return new Uint8Array(inputs);
         }
 
@@ -908,7 +990,7 @@
                 tickAccumulator = 0;
             }
 
-            const tick = game.current_tick();
+            const tick = Number(game.current_tick());
             if (tick !== lastBlockNum && tick > 0) {
                 document.getElementById('block-num').textContent = tick;
                 addBlockToFeed(tick);
@@ -917,7 +999,7 @@
                 document.getElementById('event-count').textContent = totalEvents;
                 document.getElementById('storage-writes').textContent = totalStorageWrites;
             }
-            if (game.game_over() || game.level_complete()) {
+            if (game.game_over()) {
                 document.getElementById('restart-btn').style.display = 'block';
             }
         }

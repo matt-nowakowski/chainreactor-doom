@@ -1,0 +1,13 @@
+[package]
+name = "pallet-doom-rpc"
+version = "0.1.0"
+edition = "2021"
+description = "RPC extension for on-chain DOOM — serves rendered frames to browser clients"
+
+[dependencies]
+doom-runtime-api = { path = "../doom-runtime-api" }
+codec = { package = "parity-scale-codec", version = "3" }
+jsonrpsee = { version = "0.16", features = ["server", "macros"] }
+sp-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+sp-blockchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }

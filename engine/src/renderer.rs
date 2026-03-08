@@ -280,7 +280,8 @@ pub fn render_frame(state: &GameState, fb: &mut Framebuffer) {
                 }
             }
         }
-        draw_small_text(fb, "PRESS ANY KEY", 160, VIEW_HEIGHT / 2, 200, 200, 200);
+        draw_small_text(fb, "LEVEL COMPLETE", 160, VIEW_HEIGHT / 2 - 10, 80, 220, 80);
+        draw_small_text(fb, "SIGN UP AT CHAINREACTOR.IO", 160, VIEW_HEIGHT / 2 + 4, 200, 200, 200);
     }
 }
 
@@ -331,7 +332,20 @@ fn render_floors_ceilings_full(
                     distance_brightness(dist_fp),
                     sector.effective_light(state.tick),
                 );
-                fb.set_rgb_lit(col, y, flat.data[pixel_off], flat.data[pixel_off + 1], flat.data[pixel_off + 2], bright);
+                let mut r = flat.data[pixel_off];
+                let mut g = flat.data[pixel_off + 1];
+                let mut b = flat.data[pixel_off + 2];
+
+                // Pulsing green tint on exit tile so players can find it
+                let tile = state.map.get_tile(gx as u32, gy as u32);
+                if matches!(tile, TileType::Exit) {
+                    let pulse = ((state.tick as f64 * 0.15).sin() * 0.3 + 0.7) as f64;
+                    r = (r as f64 * 0.3) as u8;
+                    g = (g as f64 * 0.5 + 130.0 * pulse) as u8;
+                    b = (b as f64 * 0.3) as u8;
+                }
+
+                fb.set_rgb_lit(col, y, r, g, b, bright);
             }
         }
 
@@ -1411,6 +1425,7 @@ fn char_bitmap(ch: char) -> [u8; 7] {
         'U' => [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
         'V' => [0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b01010, 0b00100],
         'Y' => [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100],
+        '.' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00100],
         ' ' => [0; 7],
         _ => [0b11111, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11111], // box
     }

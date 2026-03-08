@@ -1,0 +1,32 @@
+[package]
+name = "pallet-doom"
+version = "0.1.0"
+edition = "2021"
+description = "Substrate pallet — on-chain DOOM game engine"
+
+[dependencies]
+doom-engine = { path = "../engine", default-features = false, features = ["substrate"] }
+codec = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2", default-features = false, features = ["derive"] }
+frame-support = { version = "4.0.0-dev", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+frame-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-runtime = { version = "24.0.0", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-std = { version = "8.0.0", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+serde = { version = "1", features = ["derive", "alloc"], default-features = false }
+log = { version = "0.4", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "doom-engine/std",
+    "codec/std",
+    "scale-info/std",
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "serde/std",
+    "log/std",
+]
+runtime-benchmarks = ["frame-support/runtime-benchmarks", "frame-system/runtime-benchmarks"]
+try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime"]

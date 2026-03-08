@@ -1,0 +1,18 @@
+[package]
+name = "doom-runtime-api"
+version = "0.1.0"
+edition = "2021"
+description = "Runtime API trait for on-chain DOOM frame rendering"
+
+[dependencies]
+doom-engine = { path = "../engine", default-features = false, features = ["substrate"] }
+codec = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+sp-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "doom-engine/std",
+    "codec/std",
+    "sp-api/std",
+]

@@ -1,13 +1,24 @@
+#[cfg(not(feature = "std"))]
+use alloc::vec;
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+use crate::fixmath;
 use crate::map::DoomMap;
 use crate::types::*;
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "substrate")]
+use codec::{Decode, Encode};
+#[cfg(feature = "substrate")]
+use scale_info::TypeInfo;
 
 /// Door auto-close delay in ticks (~4 seconds at 15 tps).
 const DOOR_WAIT_TICKS: u8 = 60;
 
 /// Complete game state — everything needed to represent one moment in the game.
 /// This is what gets stored on-chain.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct GameState {
     pub map: DoomMap,
     pub player: Player,
@@ -207,9 +218,8 @@ impl GameState {
 
     /// Move player forward/backward and strafe, with wall collision.
     fn move_player(&mut self, forward: i32, strafe: i32) {
-        let angle = self.player.angle as f64 / 1000.0;
-        let cos_a = (angle.cos() * 1000.0) as i32;
-        let sin_a = (angle.sin() * 1000.0) as i32;
+        let cos_a = fixmath::fp_cos(self.player.angle);
+        let sin_a = fixmath::fp_sin(self.player.angle);
 
         // Forward component
         let dx = (cos_a * forward) / FP_SCALE + (-sin_a * strafe) / FP_SCALE;
@@ -286,9 +296,8 @@ impl GameState {
                 self.player.weapon_cooldown = 8;
                 let damage = self.randomize_damage(80);
                 // Fire a rocket projectile (like Imp fireball but player-owned, higher damage)
-                let angle_rad = self.player.angle as f64 / 1000.0;
-                let cos_a = (angle_rad.cos() * 1000.0) as i32;
-                let sin_a = (angle_rad.sin() * 1000.0) as i32;
+                let cos_a = fixmath::fp_cos(self.player.angle);
+                let sin_a = fixmath::fp_sin(self.player.angle);
                 let speed = 400; // faster than imp fireball
                 self.projectiles.push(Projectile {
                     x: self.player.x + cos_a * 500 / FP_SCALE,
@@ -335,14 +344,13 @@ impl GameState {
 
             let dx = enemy.x - from_x;
             let dy = enemy.y - from_y;
-            let dist_sq = dx as i64 * dx as i64 + dy as i64 * dy as i64;
-            let dist = (dist_sq as f64).sqrt() as i32;
+            let dist = fixmath::fp_dist(dx, dy);
 
             if dist > wall_dist || dist < 100 {
                 continue;
             }
 
-            let angle_to_enemy = ((dy as f64).atan2(dx as f64) * 1000.0) as i32;
+            let angle_to_enemy = fixmath::fp_atan2(dy, dx) as i32;
             let angle_diff = normalize_angle(angle_to_enemy - angle + PI) - PI;
 
             if angle_diff.abs() < cone {
@@ -371,10 +379,9 @@ impl GameState {
             self.damage_enemy(idx, damage);
         } else {
             // Bullet puff at wall hit point
-            let ray_rad = angle as f64 / 1000.0;
-            let puff_dist = (wall_dist as f64 - 50.0).max(0.0);
-            let puff_x = from_x + (puff_dist * ray_rad.cos()) as i32;
-            let puff_y = from_y + (puff_dist * ray_rad.sin()) as i32;
+            let puff_dist = (wall_dist - 50).max(0);
+            let puff_x = from_x + fixmath::fp_cos(angle) * puff_dist / FP_SCALE;
+            let puff_y = from_y + fixmath::fp_sin(angle) * puff_dist / FP_SCALE;
             self.effects.push(VisualEffect {
                 x: puff_x,
                 y: puff_y,
@@ -426,8 +433,7 @@ impl GameState {
 
             let dx = px - enemy.x;
             let dy = py - enemy.y;
-            let dist_sq = dx as i64 * dx as i64 + dy as i64 * dy as i64;
-            let dist = (dist_sq as f64).sqrt() as i32;
+            let dist = fixmath::fp_dist(dx, dy);
 
             if dist < alert_range {
                 // Sound-based alert — enemy knows general direction but has reaction delay
@@ -440,10 +446,9 @@ impl GameState {
 
     /// Use key — open doors in front of player, respecting key locks.
     fn player_use(&mut self) {
-        let angle = self.player.angle as f64 / 1000.0;
         let check_dist = FP_SCALE; // check 1 tile ahead
-        let check_x = self.player.x + (angle.cos() * check_dist as f64) as i32;
-        let check_y = self.player.y + (angle.sin() * check_dist as f64) as i32;
+        let check_x = self.player.x + fixmath::fp_cos(self.player.angle) * check_dist / FP_SCALE;
+        let check_y = self.player.y + fixmath::fp_sin(self.player.angle) * check_dist / FP_SCALE;
 
         let gx = (check_x / FP_SCALE) as u32;
         let gy = (check_y / FP_SCALE) as u32;
@@ -659,11 +664,10 @@ impl GameState {
             // Distance to player
             let dx = px - enemy.x;
             let dy = py - enemy.y;
-            let dist_sq = dx as i64 * dx as i64 + dy as i64 * dy as i64;
-            let dist = (dist_sq as f64).sqrt() as i32;
+            let dist = fixmath::fp_dist(dx, dy);
 
             // Line-of-sight check
-            let angle_to_player = ((dy as f64).atan2(dx as f64) * 1000.0) as i32;
+            let angle_to_player = fixmath::fp_atan2(dy, dx) as i32;
             let los_hit = self.map.cast_ray(enemy.x, enemy.y, angle_to_player);
             let has_los = los_hit.distance > dist;
 
@@ -694,9 +698,7 @@ impl GameState {
 
                     let target_dx = target_x - enemy.x;
                     let target_dy = target_y - enemy.y;
-                    let target_dist_sq =
-                        target_dx as i64 * target_dx as i64 + target_dy as i64 * target_dy as i64;
-                    let target_dist = (target_dist_sq as f64).sqrt() as i32;
+                    let target_dist = fixmath::fp_dist(target_dx, target_dy);
 
                     // If we reached last known position without LOS, go idle
                     if !has_los && target_dist < 500 {
@@ -707,8 +709,7 @@ impl GameState {
                     // Move toward target with zigzag behavior
                     if target_dist > 0 {
                         let speed = enemy.speed();
-                        let base_angle =
-                            ((target_dy as f64).atan2(target_dx as f64) * 1000.0) as i32;
+                        let base_angle = fixmath::fp_atan2(target_dy, target_dx) as i32;
 
                         // Zigzag: periodically add random strafe angle
                         if enemy.strafe_timer == 0 {
@@ -721,9 +722,8 @@ impl GameState {
                         }
 
                         let move_angle = base_angle + enemy.move_dir;
-                        let ma = move_angle as f64 / 1000.0;
-                        let move_x = (ma.cos() * speed as f64) as i32;
-                        let move_y = (ma.sin() * speed as f64) as i32;
+                        let move_x = fixmath::fp_cos(move_angle) * speed / FP_SCALE;
+                        let move_y = fixmath::fp_sin(move_angle) * speed / FP_SCALE;
 
                         let new_x = enemy.x + move_x;
                         let new_y = enemy.y + move_y;
@@ -752,9 +752,9 @@ impl GameState {
                         if enemy.fires_projectile() {
                             // Imp fireball — spawn projectile entity
                             let proj_speed = enemy.projectile_speed();
-                            let angle = ((dy as f64).atan2(dx as f64)) as f64;
-                            let vx = (angle.cos() * proj_speed as f64) as i32;
-                            let vy = (angle.sin() * proj_speed as f64) as i32;
+                            let proj_angle = fixmath::fp_atan2(dy, dx);
+                            let vx = fixmath::fp_cos(proj_angle) * proj_speed / FP_SCALE;
+                            let vy = fixmath::fp_sin(proj_angle) * proj_speed / FP_SCALE;
                             new_projectiles.push(Projectile {
                                 x: enemy.x,
                                 y: enemy.y,

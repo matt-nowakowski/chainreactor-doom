@@ -1,8 +1,19 @@
+#[cfg(not(feature = "std"))]
+use alloc::vec;
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+use crate::fixmath;
 use crate::types::*;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "substrate")]
+use codec::{Decode, Encode};
+#[cfg(feature = "substrate")]
+use scale_info::TypeInfo;
+
 /// Grid-based level map. Each cell is 1 unit (1000 in fixed-point).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct DoomMap {
     pub width: u32,
     pub height: u32,
@@ -69,37 +80,22 @@ impl DoomMap {
     /// and the grid coordinates of the hit cell. Uses DDA algorithm.
     /// All inputs/outputs in fixed-point (×1000).
     pub fn cast_ray(&self, x: i32, y: i32, angle: i32) -> RayHit {
-        // Convert to f64 for DDA — this function is used for both
-        // combat raycasting and rendering. When we move rendering on-chain,
-        // we'll replace with fixed-point DDA.
+        // DDA raycasting using fixmath (no_std compatible via libm)
         let px = x as f64 / FP_SCALE as f64;
         let py = y as f64 / FP_SCALE as f64;
         let a = angle as f64 / 1000.0;
 
-        let dir_x = a.cos();
-        let dir_y = a.sin();
+        let dir_x = fixmath::fp_cos(angle) as f64 / 1000.0;
+        let dir_y = fixmath::fp_sin(angle) as f64 / 1000.0;
 
-        // Current grid cell
         let mut map_x = px as i32;
         let mut map_y = py as i32;
 
-        // Length of ray from one x/y-side to next x/y-side
-        let delta_dist_x = if dir_x.abs() < 1e-10 {
-            1e30
-        } else {
-            (1.0 / dir_x).abs()
-        };
-        let delta_dist_y = if dir_y.abs() < 1e-10 {
-            1e30
-        } else {
-            (1.0 / dir_y).abs()
-        };
+        let delta_dist_x = if fixmath::fabs(dir_x) < 1e-10 { 1e30 } else { fixmath::fabs(1.0 / dir_x) };
+        let delta_dist_y = if fixmath::fabs(dir_y) < 1e-10 { 1e30 } else { fixmath::fabs(1.0 / dir_y) };
 
-        // Direction to step in x/y (either +1 or -1)
         let step_x: i32;
         let step_y: i32;
-
-        // Length of ray from current position to next x/y-side
         let mut side_dist_x: f64;
         let mut side_dist_y: f64;
 
@@ -119,8 +115,7 @@ impl DoomMap {
             side_dist_y = (map_y as f64 + 1.0 - py) * delta_dist_y;
         }
 
-        // DDA loop
-        let mut side: u8 = 0; // 0 = x-side hit, 1 = y-side hit
+        let mut side: u8 = 0;
         let max_steps = 64;
 
         for _ in 0..max_steps {
@@ -147,13 +142,12 @@ impl DoomMap {
                         side_dist_y - delta_dist_y
                     };
 
-                    // Calculate wall hit position (0.0 - 1.0) for texture mapping
                     let wall_x = if side == 0 {
                         py + dist * dir_y
                     } else {
                         px + dist * dir_x
                     };
-                    let wall_x = wall_x - wall_x.floor();
+                    let wall_x = wall_x - fixmath::floor(wall_x);
 
                     return RayHit {
                         distance: (dist * FP_SCALE as f64) as i32,
@@ -180,7 +174,7 @@ impl DoomMap {
                     } else {
                         px + dist * dir_x
                     };
-                    let wall_x = wall_x - wall_x.floor();
+                    let wall_x = wall_x - fixmath::floor(wall_x);
 
                     return RayHit {
                         distance: (dist * FP_SCALE as f64) as i32,
@@ -192,11 +186,10 @@ impl DoomMap {
                         hit_type: RayHitType::Door,
                     };
                 }
-                _ => {} // continue through empty/open doors
+                _ => {}
             }
         }
 
-        // No hit — return max distance
         RayHit {
             distance: 64 * FP_SCALE,
             grid_x: 0,

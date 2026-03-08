@@ -1,7 +1,17 @@
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+
+#[cfg(feature = "substrate")]
+use codec::{Decode, Encode};
+#[cfg(feature = "substrate")]
+use scale_info::TypeInfo;
+
 use serde::{Deserialize, Serialize};
+use crate::fixmath;
 
 /// Player input actions — submitted as extrinsics on-chain.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum PlayerInput {
     Forward,
     Backward,
@@ -23,6 +33,7 @@ pub enum PlayerInput {
 
 /// Tile types in the map grid.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum TileType {
     Empty,
     Wall(u8), // texture index (0-15)
@@ -32,6 +43,7 @@ pub enum TileType {
 
 /// Light effect for a sector.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum LightEffect {
     None,
     Flicker,    // random flicker between light_level and light_level/2
@@ -40,7 +52,8 @@ pub enum LightEffect {
 }
 
 /// Sector data for a grid cell — controls floor/ceiling heights, textures, and lighting.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct Sector {
     pub floor_height: i32,    // fixed-point (0 = ground level, 500 = half tile up)
     pub ceiling_height: i32,  // fixed-point (1000 = standard height)
@@ -95,11 +108,13 @@ impl Sector {
             }
             LightEffect::Pulse => {
                 // Smooth sinusoidal pulse (period ~120 ticks = 8 seconds)
-                let phase = (tick % 120) as f64 * 6.283 / 120.0;
-                let factor = (phase.sin() + 1.0) / 2.0; // 0.0 - 1.0
-                let min_light = self.light_level as f64 * 0.4;
-                let range = self.light_level as f64 - min_light;
-                (min_light + range * factor) as u8
+                // phase in milliradians: tick%120 * 6283 / 120
+                let phase_mrad = ((tick % 120) as i32 * 6283) / 120;
+                let sin_val = fixmath::fp_sin(phase_mrad); // -1000..1000
+                let factor = (sin_val + 1000) as u32; // 0..2000
+                let min_light = (self.light_level as u32 * 2) / 5; // 40%
+                let range = self.light_level as u32 - min_light;
+                (min_light + range * factor / 2000) as u8
             }
             LightEffect::Strobe => {
                 // Fast on/off every 4 ticks
@@ -114,6 +129,7 @@ impl Sector {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum DoorState {
     Closed,
     Opening(u8),    // progress 0-100
@@ -125,6 +141,7 @@ pub enum DoorState {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum EnemyType {
     Imp,      // fireball attack, medium health
     Demon,    // melee only, fast, tanky
@@ -132,6 +149,7 @@ pub enum EnemyType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum EnemyAiState {
     Idle,
     Alerted(u8),   // reaction delay ticks before chasing
@@ -143,6 +161,7 @@ pub enum EnemyAiState {
 
 /// Weapon types available to the player.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum WeaponType {
     Fist,
     Pistol,
@@ -153,13 +172,15 @@ pub enum WeaponType {
 
 /// Visual effect type for bullet puffs and blood splats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum EffectType {
     BulletPuff,  // yellow-white flash when bullet hits a wall
     BloodSplat,  // red splash when bullet hits an enemy
 }
 
 /// A temporary visual effect in the world (bullet puff, blood, etc).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct VisualEffect {
     pub x: i32,        // fixed-point world position
     pub y: i32,
@@ -168,7 +189,8 @@ pub struct VisualEffect {
 }
 
 /// A projectile traveling through the world (Imp fireballs, etc).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct Projectile {
     pub x: i32,        // fixed-point
     pub y: i32,        // fixed-point
@@ -181,12 +203,14 @@ pub struct Projectile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum ProjectileSource {
     Enemy(EnemyType),
     Player,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum ItemType {
     HealthPack,      // +25 health
     Medikit,         // +50 health
@@ -204,6 +228,7 @@ pub enum ItemType {
 
 /// Decorative props — non-interactive scenery objects.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum DecorationType {
     Barrel,         // BAR1 — explodable barrel
     Column,         // COLU — tech column
@@ -271,7 +296,8 @@ impl DecorationType {
 }
 
 /// A decoration instance placed in the world.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct Decoration {
     pub x: i32,       // fixed-point position
     pub y: i32,
@@ -285,7 +311,8 @@ impl Decoration {
 }
 
 /// Player state.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct Player {
     pub x: i32,       // fixed-point position (× 1000)
     pub y: i32,       // fixed-point position (× 1000)
@@ -334,21 +361,25 @@ impl Player {
     }
 
     /// Angle in fixed-point milliradians to f64 radians (for rendering).
+    #[cfg(feature = "std")]
     pub fn angle_rad(&self) -> f64 {
         self.angle as f64 / 1000.0
     }
 
+    #[cfg(feature = "std")]
     pub fn x_f64(&self) -> f64 {
         self.x as f64 / 1000.0
     }
 
+    #[cfg(feature = "std")]
     pub fn y_f64(&self) -> f64 {
         self.y as f64 / 1000.0
     }
 }
 
 /// Enemy instance state.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct Enemy {
     pub x: i32,          // fixed-point × 1000
     pub y: i32,          // fixed-point × 1000
@@ -383,10 +414,12 @@ impl Enemy {
         }
     }
 
+    #[cfg(feature = "std")]
     pub fn x_f64(&self) -> f64 {
         self.x as f64 / 1000.0
     }
 
+    #[cfg(feature = "std")]
     pub fn y_f64(&self) -> f64 {
         self.y as f64 / 1000.0
     }
@@ -452,7 +485,8 @@ impl Enemy {
 }
 
 /// Item instance state.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct Item {
     pub x: i32, // fixed-point × 1000
     pub y: i32,
@@ -472,7 +506,8 @@ impl Item {
 }
 
 /// Game events emitted during a tick (become on-chain events).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub enum GameEvent {
     EnemyKilled { enemy_type: EnemyType, x: i32, y: i32 },
     ItemPickedUp { item_type: ItemType },
@@ -491,7 +526,8 @@ pub const HALF_PI: i32 = 1570;
 /// Deterministic PRNG for on-chain compatibility.
 /// Uses the same table approach as Doom's M_Random (256-entry table).
 /// This ensures bit-identical results across all validators.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "substrate", derive(Encode, Decode, TypeInfo))]
 pub struct DoomRng {
     index: u8,
 }

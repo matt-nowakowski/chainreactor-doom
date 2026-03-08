@@ -5,8 +5,12 @@ edition = "2021"
 description = "Pure Rust DOOM-style game engine for on-chain execution"
 
 [dependencies]
-serde = { version = "1", features = ["derive"], default-features = false }
+serde = { version = "1", features = ["derive", "alloc"], default-features = false }
+libm = { version = "0.2", default-features = false }
+codec = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"], optional = true }
+scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 
 [features]
 default = ["std"]
-std = ["serde/std"]
+std = ["serde/std", "codec?/std", "scale-info?/std"]
+substrate = ["codec", "scale-info"]

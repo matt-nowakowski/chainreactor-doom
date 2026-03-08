@@ -1,4 +1,8 @@
 [workspace]
-members = ["engine", "wasm"]
-exclude = ["tools/wad-extract"]
+members = ["engine", "wasm", "pallet-doom", "doom-runtime-api"]
+exclude = ["tools/wad-extract", "pallet-doom-rpc"]
 resolver = "2"
+
+# Pin transitive deps that require edition2024 (incompatible with Rust 1.81.0)
+[workspace.dependencies]
+blake2b_simd = "=1.0.2"
