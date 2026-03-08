@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chain Reactor — DOOM On-Chain</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #2563EB;
+            --accent-dim: rgba(37, 99, 235, 0.15);
+            --bg: #09090B;
+            --surface: #111113;
+            --surface-2: #18181B;
+            --border: #27272A;
+            --border-subtle: #1E1E21;
+            --text: #FAFAFA;
+            --text-muted: #A1A1AA;
+            --text-dim: #71717A;
+            --green: #22C55E;
+            --red: #EF4444;
+            --yellow: #EAB308;
+            --blue: #3B82F6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── NAV ─── */
+        nav { border-bottom: 1px solid var(--border-subtle); padding: 0 24px; }
+
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 0;
+        }
+
+        .logo {
+            font-weight: 900; font-style: italic; text-transform: uppercase;
+            font-size: 17px; letter-spacing: -0.02em;
+            color: var(--text); text-decoration: none;
+        }
+
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+
+        .nav-link {
+            font-size: 14px; font-weight: 300; color: var(--text-dim);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .nav-link:hover { color: var(--text); }
+
+        .nav-btn {
+            font-size: 13px; font-weight: 500; color: white;
+            background: #1A1A1A; border: 1px solid var(--border);
+            padding: 8px 20px; border-radius: 999px; cursor: pointer;
+            text-decoration: none; transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .nav-btn:hover { opacity: 0.8; }
+
+        /* ─── SECTION SYSTEM ─── */
+        .section { padding: 96px 24px; }
+        .section-inner { max-width: 1200px; margin: 0 auto; }
+
+        /* ─── HERO ─── */
+        .hero {
+            text-align: center;
+            padding: 80px 24px 64px;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.15em; color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            padding: 5px 14px; border-radius: 999px; margin-bottom: 28px;
+        }
+
+        .hero-badge .pulse {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent); animation: pulse 2s ease-in-out infinite;
+        }
+        .hero-badge.live { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
+        .hero-badge.live .pulse { background: var(--green); }
+        .hero-badge.error { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+        .hero-badge.error .pulse { background: var(--red); animation: none; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+            font-weight: 200; line-height: 1.1;
+            letter-spacing: -0.035em; margin-bottom: 20px;
+        }
+        .hero h1 strong { font-weight: 600; }
+
+        .hero p {
+            font-size: 16px; font-weight: 300; color: var(--text-muted);
+            line-height: 1.75; max-width: 540px; margin: 0 auto 32px;
+        }
+
+        .specs-bar {
+            display: flex; justify-content: center; gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        .spec-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: var(--text-dim);
+        }
+
+        .spec-item .dot {
+            width: 3px; height: 3px; border-radius: 50%; background: var(--border);
+        }
+
+        .spec-item code {
+            font-family: 'JetBrains Mono', monospace; font-size: 10px;
+            color: var(--text-muted); background: var(--surface);
+            padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);
+        }
+
+        /* ─── DEMO SECTION ─── */
+        .demo-section { padding: 0 24px 96px; }
+        .demo-section .section-inner { max-width: 1080px; }
+
+        .demo-label { text-align: center; margin-bottom: 48px; }
+
+        .demo-label span {
+            font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.2em; color: var(--text-dim);
+        }
+
+        .game-layout {
+            display: grid; grid-template-columns: 1fr 260px;
+            gap: 16px; align-items: start;
+        }
+
+        /* ─── VIEWPORT ─── */
+        .viewport-wrapper {
+            position: relative; border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border); background: #000;
+        }
+
+        .viewport-wrapper::before {
+            content: ''; position: absolute; inset: 0; border-radius: 12px;
+            pointer-events: none; z-index: 2;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+        }
+
+        #game-canvas {
+            display: block; width: 100%; height: auto;
+            aspect-ratio: 320 / 200; image-rendering: pixelated;
+            image-rendering: crisp-edges; cursor: crosshair;
+        }
+
+        .viewport-hud {
+            position: absolute; top: 12px; right: 12px;
+            display: flex; gap: 8px; z-index: 5;
+        }
+
+        .hud-pill {
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+            color: var(--text-dim); background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .viewport-controls-hint { position: absolute; top: 12px; left: 12px; z-index: 5; }
+
+        .controls-toggle {
+            font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+            color: var(--text-dim); background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+            transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .controls-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
+
+        .connect-overlay {
+            position: absolute; inset: 0; z-index: 15;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        }
+        .connect-overlay.hidden { display: none; }
+
+        .connect-status {
+            font-family: 'JetBrains Mono', monospace; font-size: 13px;
+            color: var(--text-muted); margin-bottom: 12px;
+        }
+
+        .connect-btn {
+            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+            color: white; background: var(--accent);
+            border: none; padding: 10px 28px; border-radius: 999px;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .connect-btn:hover { opacity: 0.85; }
+        .connect-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .connect-error {
+            font-size: 11px; color: var(--red); margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-msg {
+            text-align: center; padding: 8px; font-size: 18px;
+            font-family: 'JetBrains Mono', monospace;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            text-shadow: 2px 2px 0 #000; z-index: 10;
+        }
+        .game-over { color: var(--red); }
+        .level-complete { color: var(--green); }
+
+        /* ─── SIDE PANEL ─── */
+        .side-panel { display: flex; flex-direction: column; gap: 8px; }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border-subtle);
+            border-radius: 10px; padding: 14px;
+        }
+
+        .card-header {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--text-dim);
+            margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+        }
+
+        .card-header .icon { width: 14px; height: 14px; opacity: 0.5; }
+
+        .stat-row {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 4px 0;
+        }
+
+        .stat-label { font-size: 12px; font-weight: 400; color: var(--text-dim); }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; font-weight: 500; color: var(--text-muted);
+        }
+
+        .chain-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            display: inline-block; margin-right: 4px;
+        }
+        .chain-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .chain-dot.offline { background: var(--red); }
+
+        .block-feed {
+            display: flex; flex-direction: column; gap: 4px;
+            max-height: 135px; overflow-y: auto;
+        }
+        .block-feed::-webkit-scrollbar { width: 3px; }
+        .block-feed::-webkit-scrollbar-track { background: transparent; }
+        .block-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .block-entry {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 8px; background: var(--surface-2); border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px;
+        }
+        .block-entry.latest {
+            background: var(--accent-dim);
+            border: 1px solid rgba(37, 99, 235, 0.15);
+        }
+
+        .block-num { color: var(--text-muted); font-weight: 500; }
+        .block-hash { color: var(--text-dim); }
+
+        .ext-pill {
+            font-size: 9px; color: var(--accent); background: var(--accent-dim);
+            padding: 1px 5px; border-radius: 3px; font-weight: 500;
+        }
+
+        .restart-btn {
+            width: 100%; font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 500; color: white;
+            background: var(--red); border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 0.05em; display: none; transition: opacity 0.2s;
+        }
+        .restart-btn:hover { opacity: 0.85; }
+
+        /* ─── WARNING BANNER ─── */
+        .warning-banner {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            z-index: 12; padding: 8px 16px;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px;
+            font-weight: 500; text-align: center;
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0; transform: translateY(100%); pointer-events: none;
+        }
+        .warning-banner.visible {
+            opacity: 1; transform: translateY(0); pointer-events: auto;
+        }
+        .warning-banner.stall {
+            background: rgba(234, 179, 8, 0.9); color: #000;
+        }
+        .warning-banner.error {
+            background: rgba(239, 68, 68, 0.9); color: #fff;
+        }
+        .warning-banner.info {
+            background: rgba(37, 99, 235, 0.9); color: #fff;
+        }
+
+        .player-cap-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 0;
+        }
+        .cap-track {
+            flex: 1; height: 4px; background: var(--surface-2);
+            border-radius: 2px; overflow: hidden;
+        }
+        .cap-fill {
+            height: 100%; background: var(--accent); border-radius: 2px;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .cap-fill.warn { background: var(--yellow); }
+        .cap-fill.full { background: var(--red); }
+        .cap-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-dim); white-space: nowrap;
+        }
+
+        /* ─── FEATURES SECTION ─── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 32px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border);
+            transform: translateY(-2px);
+        }
+
+        .feature-label {
+            font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 16px;
+        }
+
+        .feature-title {
+            font-size: 1.35rem; font-weight: 400;
+            letter-spacing: -0.01em; margin-bottom: 16px; line-height: 1.3;
+        }
+
+        .feature-desc {
+            font-size: 14px; font-weight: 300; line-height: 1.7;
+            color: var(--text-dim);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+            font-weight: 200;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .section-header p {
+            font-size: 15px; font-weight: 300;
+            color: var(--text-muted); line-height: 1.7;
+            max-width: 480px; margin: 0 auto;
+        }
+
+        /* ─── CTA SECTION ─── */
+        .cta-box {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--surface);
+            padding: 64px 32px 72px;
+            text-align: center;
+        }
+
+        .cta-box h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 200; letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .cta-box p {
+            font-size: 15px; font-weight: 300;
+            color: var(--text-muted); line-height: 1.7;
+            max-width: 420px; margin: 0 auto;
+        }
+
+        .cta-actions {
+            margin-top: 36px;
+            display: flex; align-items: center; justify-content: center; gap: 24px;
+        }
+
+        .cta-link {
+            font-size: 14px; font-weight: 500; color: var(--accent);
+            text-decoration: none; display: flex; align-items: center; gap: 4px;
+            transition: opacity 0.2s;
+        }
+        .cta-link:hover { opacity: 0.7; }
+        .cta-link svg { width: 14px; height: 14px; }
+
+        .cta-btn {
+            font-size: 13px; font-weight: 500;
+            background: var(--text); color: var(--bg);
+            padding: 10px 24px; border-radius: 999px;
+            text-decoration: none; transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .cta-btn:hover { opacity: 0.85; }
+
+        /* ─── CONTROLS MODAL ─── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 200; display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 28px; width: 360px;
+            max-width: 90vw; position: relative;
+        }
+
+        .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; }
+
+        .modal-close {
+            position: absolute; top: 16px; right: 16px;
+            width: 28px; height: 28px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--surface-2);
+            color: var(--text-dim); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; transition: all 0.15s;
+        }
+        .modal-close:hover { background: var(--border); color: var(--text); }
+
+        .controls-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px 20px; font-size: 12px; align-items: center;
+        }
+        .controls-grid .keys { display: flex; gap: 3px; justify-content: flex-end; }
+        .controls-grid .action { color: var(--text-dim); font-weight: 400; text-align: left; }
+
+        kbd {
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+            color: var(--text-muted); background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 4px;
+            padding: 3px 6px; line-height: 1;
+        }
+
+        /* ─── FOOTER ─── */
+        footer { border-top: 1px solid var(--border-subtle); padding: 0 24px; }
+
+        .footer-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 32px 0;
+        }
+
+        .footer-logo {
+            font-weight: 900; font-style: italic; text-transform: uppercase;
+            font-size: 13px; letter-spacing: -0.02em; color: var(--text-dim);
+        }
+
+        .footer-tagline { font-size: 12px; color: var(--text-dim); }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0; transform: translateY(32px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+        .fade-up {
+            animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .fade-up.d1 { animation-delay: 0.08s; }
+        .fade-up.d2 { animation-delay: 0.16s; }
+        .fade-up.d3 { animation-delay: 0.24s; }
+        .fade-up.d4 { animation-delay: 0.32s; }
+
+        @keyframes block-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .block-in { animation: block-in 0.25s ease forwards; }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 860px) {
+            .game-layout { grid-template-columns: 1fr; }
+            .side-panel { display: grid; grid-template-columns: 1fr 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+            .hero { padding: 80px 24px 64px; }
+            .cta-actions { flex-direction: column; gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ NAV ═══ -->
+    <nav>
+        <div class="nav-inner">
+            <a class="logo" href="https://chainreactor.io">Chainreactor</a>
+            <div class="nav-links">
+                <a href="./index.html" class="nav-link">Browser Demo</a>
+                <a href="https://chainreactor.io/login" class="nav-link">Log in</a>
+                <a href="https://chainreactor.io/signup" class="nav-btn">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══ HERO ═══ -->
+    <div class="hero fade-up">
+        <div class="hero-badge" id="connection-badge">
+            <span class="pulse"></span>
+            <span id="connection-label">Connecting to chain...</span>
+        </div>
+        <h1>DOOM runs <strong>on-chain</strong></h1>
+        <p>Every frame you see is rendered by a validator. Every keypress is a signed extrinsic. The game state lives in Substrate storage. Your browser is just a screen.</p>
+        <div class="specs-bar fade-up d2">
+            <div class="spec-item"><code>500ms</code> blocks</div>
+            <div class="spec-item"><span class="dot"></span></div>
+            <div class="spec-item"><code>320×200</code> RGBA via RPC</div>
+            <div class="spec-item"><span class="dot"></span></div>
+            <div class="spec-item"><code>pallet-doom</code> runtime</div>
+            <div class="spec-item"><span class="dot"></span></div>
+            <div class="spec-item"><code>0</code> client-side logic</div>
+        </div>
+    </div>
+
+    <!-- ═══ DEMO SECTION ═══ -->
+    <div class="demo-section">
+        <div class="section-inner">
+            <div class="demo-label fade-up d3"><span>Live On-Chain</span></div>
+            <div class="game-layout fade-up d4">
+                <div class="viewport-wrapper">
+                    <canvas id="game-canvas" width="320" height="200"></canvas>
+                    <div class="viewport-hud">
+                        <div class="hud-pill" id="latency">-- ms</div>
+                        <div class="hud-pill" id="block-time">-- ms/blk</div>
+                    </div>
+                    <div class="viewport-controls-hint">
+                        <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
+                    </div>
+
+                    <!-- Connect overlay -->
+                    <div class="connect-overlay" id="connect-overlay">
+                        <div class="connect-status" id="connect-status">Ready to connect</div>
+                        <button class="connect-btn" id="connect-btn" onclick="connectAndPlay()">Start Game</button>
+                        <div class="connect-error" id="connect-error"></div>
+                    </div>
+
+                    <div class="status-msg" id="status-msg"></div>
+                    <div class="warning-banner" id="warning-banner"></div>
+                </div>
+
+                <div class="side-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            Network
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label"><span class="chain-dot offline" id="chain-dot"></span> Status</span>
+                            <span class="stat-value" id="chain-status">Disconnected</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Runtime</span>
+                            <span class="stat-value" id="runtime-name">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Peers</span>
+                            <span class="stat-value" id="peer-count">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Block time</span>
+                            <span class="stat-value" id="block-time-stat">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Players</span>
+                            <span class="stat-value" id="player-count">--</span>
+                        </div>
+                        <div class="player-cap-bar">
+                            <div class="cap-track"><div class="cap-fill" id="cap-fill" style="width:0%"></div></div>
+                            <span class="cap-text" id="cap-text">-- / 32</span>
+                        </div>
+                    </div>
+
+                    <div class="card card-blocks">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            Latest Blocks
+                        </div>
+                        <div class="block-feed" id="block-feed"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Game State
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Block #</span>
+                            <span class="stat-value" id="block-num" style="color: var(--accent);">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Extrinsics sent</span>
+                            <span class="stat-value" id="ext-count">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Frames received</span>
+                            <span class="stat-value" id="frame-count">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Account</span>
+                            <span class="stat-value" id="account-display">--</span>
+                        </div>
+                    </div>
+
+                    <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ FEATURES SECTION ═══ -->
+    <div class="section">
+        <div class="section-inner">
+            <div class="section-header reveal">
+                <h2>How it works</h2>
+                <p>Your browser sends keypresses. The chain does everything else.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div>
+                        <p class="feature-label">Input</p>
+                        <h3 class="feature-title">Keypresses become extrinsics</h3>
+                    </div>
+                    <p class="feature-desc">Every keypress is collected and submitted as a signed Substrate extrinsic via <code>doom.submitInput</code>. Your browser has zero game logic — it only knows how to send transactions and paint pixels.</p>
+                </div>
+
+                <div class="feature-card reveal" style="transition-delay: 0.08s">
+                    <div>
+                        <p class="feature-label">Execution</p>
+                        <h3 class="feature-title">Validators tick the game</h3>
+                    </div>
+                    <p class="feature-desc">Every 500ms, the chain produces a block. The <code>on_initialize</code> hook reads queued inputs, runs physics, AI, collision detection — the full DOOM engine — and writes the new game state to storage.</p>
+                </div>
+
+                <div class="feature-card reveal" style="transition-delay: 0.16s">
+                    <div>
+                        <p class="feature-label">Rendering</p>
+                        <h3 class="feature-title">Frames rendered by the chain</h3>
+                    </div>
+                    <p class="feature-desc">Your browser calls <code>doom_renderFrame</code> RPC. The validator raycasts the scene from on-chain state, composites sprites, and returns 320×200 raw RGBA pixels. Your device just paints them to a canvas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ CTA SECTION ═══ -->
+    <div class="section">
+        <div class="section-inner">
+            <div class="cta-box reveal">
+                <h2>Ready to build?</h2>
+                <p>If Substrate can run DOOM — with real-time physics, AI, and rendering — imagine what it can do for your project. Launch a production-grade appchain in minutes.</p>
+                <div class="cta-actions">
+                    <a href="https://chainreactor.io/signup" class="cta-link">
+                        Launch your chain
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </a>
+                    <a href="https://chainreactor.io/signup" class="cta-btn">Get started</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ CONTROLS MODAL ═══ -->
+    <div class="modal-overlay" id="controls-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal">
+            <div class="modal-title">Controls</div>
+            <button class="modal-close" onclick="document.getElementById('controls-modal').classList.remove('open')">&times;</button>
+            <div class="controls-grid">
+                <span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+                <span class="action">Move</span>
+                <span class="keys"><kbd>←</kbd><kbd>→</kbd></span>
+                <span class="action">Turn</span>
+                <span class="keys"><kbd>Space</kbd></span>
+                <span class="action">Shoot</span>
+                <span class="keys"><kbd>E</kbd></span>
+                <span class="action">Use / Open door</span>
+                <span class="keys"><kbd>1</kbd> – <kbd>5</kbd></span>
+                <span class="action">Weapons</span>
+                <span class="keys"><kbd>R</kbd></span>
+                <span class="action">Restart</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer>
+        <div class="footer-inner">
+            <span class="footer-logo">Chainreactor</span>
+            <p class="footer-tagline">Built on Polkadot &middot; Powered by Substrate</p>
+        </div>
+    </footer>
+
+    <!-- ═══ POLKADOT.JS API ═══ -->
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/bundle-polkadot-util.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/util-crypto@12.6.2/bundle-polkadot-util-crypto.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/api@10.13.1/bundle-polkadot-api.min.js"></script>
+
+    <script>
+        // ═══ CONFIGURATION ═══
+        const NODE_WS = 'ws://159.89.88.85:9944';
+        const FRAME_WIDTH = 320;
+        const FRAME_HEIGHT = 200;
+        const FRAME_BYTES = FRAME_WIDTH * FRAME_HEIGHT * 4; // RGBA
+
+        // ═══ STATE ═══
+        let api = null;
+        let account = null; // Alice keypair
+        let ws = null; // Raw WebSocket for custom RPC
+        let rpcId = 1;
+        let pendingRpc = {};
+        let connected = false;
+        let gameActive = false;
+        let keys = {};
+        let inputBuffer = [];
+        let totalExtSent = 0;
+        let totalFrames = 0;
+        let lastBlockTime = 0;
+        let lastBlockNumber = 0;
+        let blockTimeAvg = 0;
+        let nonce = null;
+        let sendingInput = false;
+        let stallTimer = null;
+        const STALL_THRESHOLD_MS = 5000; // 10x the 500ms block time
+        const MAX_PLAYERS = 32;
+
+        // ═══ DOM ═══
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        const imageData = ctx.createImageData(FRAME_WIDTH, FRAME_HEIGHT);
+
+        // ═══ SCROLL REVEAL ═══
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // ═══ KEYBOARD ═══
+        document.addEventListener('keydown', (e) => {
+            if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
+            if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
+            keys[e.code] = true;
+        });
+        document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+        function collectInputs() {
+            const inputs = [];
+            if (keys['KeyW'] || keys['ArrowUp']) inputs.push(0);    // Forward
+            if (keys['KeyS'] || keys['ArrowDown']) inputs.push(1);  // Backward
+            if (keys['ArrowLeft']) inputs.push(2);                   // TurnLeft
+            if (keys['ArrowRight']) inputs.push(3);                  // TurnRight
+            if (keys['KeyA']) inputs.push(4);                        // StrafeLeft
+            if (keys['KeyD']) inputs.push(5);                        // StrafeRight
+            if (keys['Space']) inputs.push(6);                       // Shoot
+            if (keys['KeyE']) inputs.push(7);                        // Use
+            if (keys['KeyQ']) { inputs.push(8); keys['KeyQ'] = false; }  // NextWeapon
+            if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; }
+            if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; }
+            if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; }
+            if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
+            if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
+            return inputs;
+        }
+
+        // ═══ RAW WEBSOCKET RPC (for custom doom_* methods) ═══
+        function rpcCall(method, params) {
+            return new Promise((resolve, reject) => {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    reject(new Error('WebSocket not connected'));
+                    return;
+                }
+                const id = rpcId++;
+                pendingRpc[id] = { resolve, reject };
+                ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+                setTimeout(() => {
+                    if (pendingRpc[id]) {
+                        delete pendingRpc[id];
+                        reject(new Error('RPC timeout'));
+                    }
+                }, 10000);
+            });
+        }
+
+        function connectRawWs() {
+            return new Promise((resolve, reject) => {
+                ws = new WebSocket(NODE_WS);
+                ws.onopen = () => resolve();
+                ws.onerror = (e) => reject(new Error('WebSocket connection failed'));
+                ws.onclose = () => {
+                    connected = false;
+                    updateConnectionUI('disconnected');
+                };
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    if (msg.id && pendingRpc[msg.id]) {
+                        const { resolve, reject } = pendingRpc[msg.id];
+                        delete pendingRpc[msg.id];
+                        if (msg.error) reject(new Error(msg.error.message));
+                        else resolve(msg.result);
+                    }
+                };
+            });
+        }
+
+        // ═══ WARNING SYSTEM ═══
+        function showWarning(msg, type = 'stall') {
+            const banner = document.getElementById('warning-banner');
+            banner.textContent = msg;
+            banner.className = 'warning-banner visible ' + type;
+        }
+
+        function hideWarning() {
+            document.getElementById('warning-banner').className = 'warning-banner';
+        }
+
+        function resetStallTimer() {
+            if (stallTimer) clearTimeout(stallTimer);
+            hideWarning();
+            stallTimer = setTimeout(() => {
+                showWarning('Chain stalled — no blocks received for ' + (STALL_THRESHOLD_MS / 1000) + 's', 'stall');
+                document.getElementById('chain-status').textContent = 'Stalled';
+                document.getElementById('chain-dot').className = 'chain-dot offline';
+            }, STALL_THRESHOLD_MS);
+        }
+
+        // ═══ PLAYER CAP ═══
+        async function checkPlayerCap() {
+            try {
+                // Query ActivePlayers storage
+                const activePlayers = await api.query.doom.activePlayers();
+                const count = activePlayers.length;
+                const pct = Math.round((count / MAX_PLAYERS) * 100);
+
+                document.getElementById('player-count').textContent = count;
+                document.getElementById('cap-text').textContent = count + ' / ' + MAX_PLAYERS;
+
+                const fill = document.getElementById('cap-fill');
+                fill.style.width = pct + '%';
+                fill.className = 'cap-fill' + (pct >= 100 ? ' full' : pct >= 75 ? ' warn' : '');
+
+                return count < MAX_PLAYERS;
+            } catch (e) {
+                // If query fails, allow attempt
+                return true;
+            }
+        }
+
+        // ═══ GAME STATE MONITORING ═══
+        async function checkGameState() {
+            try {
+                const hasGame = await rpcCall('doom_hasActiveGame', [account.address]);
+                if (!hasGame && gameActive) {
+                    // Game was removed (timeout, crash, etc.)
+                    gameActive = false;
+                    showWarning('Game session ended — start a new game', 'info');
+                    document.getElementById('restart-btn').style.display = 'block';
+                }
+            } catch (e) {
+                // Ignore — will retry next block
+            }
+        }
+
+        // ═══ FRAME RENDERING ═══
+        async function fetchAndRenderFrame() {
+            try {
+                const startTime = performance.now();
+                const hexData = await rpcCall('doom_renderFrame', [account.address]);
+                const latency = Math.round(performance.now() - startTime);
+                document.getElementById('latency').textContent = latency + ' ms';
+
+                if (!hexData || hexData === '0x' || hexData.length < 10) return;
+
+                // Decode hex RGBA → canvas
+                const hex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
+                const bytes = new Uint8Array(hex.length / 2);
+                for (let i = 0; i < bytes.length; i++) {
+                    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+                }
+
+                if (bytes.length >= FRAME_BYTES) {
+                    imageData.data.set(bytes.subarray(0, FRAME_BYTES));
+                    ctx.putImageData(imageData, 0, 0);
+                    totalFrames++;
+                    document.getElementById('frame-count').textContent = totalFrames;
+                }
+            } catch (e) {
+                // Silent fail on frame fetch — will retry next block
+            }
+        }
+
+        // ═══ INPUT SUBMISSION ═══
+        async function submitInputs() {
+            if (sendingInput || !gameActive || !api) return;
+
+            const inputs = collectInputs();
+            if (inputs.length === 0) return;
+
+            sendingInput = true;
+            try {
+                const tx = api.tx.doom.submitInput(inputs);
+                await tx.signAndSend(account, { nonce: -1 });
+                totalExtSent++;
+                document.getElementById('ext-count').textContent = totalExtSent;
+            } catch (e) {
+                console.warn('Input submit failed:', e.message);
+            }
+            sendingInput = false;
+        }
+
+        // ═══ BLOCK SUBSCRIPTION ═══
+        function subscribeBlocks() {
+            // Use raw WS to subscribe to new heads
+            const subId = rpcId++;
+            ws.send(JSON.stringify({
+                jsonrpc: '2.0', id: subId,
+                method: 'chain_subscribeNewHeads', params: []
+            }));
+
+            // Override message handler to also handle subscriptions
+            const originalHandler = ws.onmessage;
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+
+                // Subscription notification
+                if (msg.method === 'chain_newHead' && msg.params) {
+                    const header = msg.params.result;
+                    const blockNum = parseInt(header.number, 16);
+                    const now = performance.now();
+
+                    if (lastBlockTime > 0) {
+                        const dt = now - lastBlockTime;
+                        blockTimeAvg = blockTimeAvg ? blockTimeAvg * 0.8 + dt * 0.2 : dt;
+                        document.getElementById('block-time').textContent = Math.round(blockTimeAvg) + ' ms/blk';
+                        document.getElementById('block-time-stat').textContent = Math.round(blockTimeAvg) + 'ms';
+                    }
+                    lastBlockTime = now;
+                    lastBlockNumber = blockNum;
+
+                    document.getElementById('block-num').textContent = blockNum;
+                    addBlockToFeed(blockNum, header.parentHash);
+
+                    // Reset stall detection — chain is alive
+                    resetStallTimer();
+
+                    // Fetch frame on each new block
+                    if (gameActive) {
+                        fetchAndRenderFrame();
+                        // Periodic game state check (every 10 blocks)
+                        if (blockNum % 10 === 0) checkGameState();
+                    }
+
+                    // Periodic player cap refresh (every 20 blocks)
+                    if (blockNum % 20 === 0) checkPlayerCap();
+                    return;
+                }
+
+                // Regular RPC response
+                if (msg.id && pendingRpc[msg.id]) {
+                    const { resolve, reject } = pendingRpc[msg.id];
+                    delete pendingRpc[msg.id];
+                    if (msg.error) reject(new Error(msg.error.message));
+                    else resolve(msg.result);
+                }
+            };
+        }
+
+        function addBlockToFeed(blockNum, hash) {
+            const feed = document.getElementById('block-feed');
+            const shortHash = hash ? hash.slice(0, 10) + '...' + hash.slice(-4) : '';
+
+            const prev = feed.querySelector('.latest');
+            if (prev) prev.classList.remove('latest');
+
+            const entry = document.createElement('div');
+            entry.className = 'block-entry latest block-in';
+            entry.innerHTML = `
+                <span class="block-num">#${blockNum}</span>
+                <span class="block-hash">${shortHash}</span>
+            `;
+            feed.prepend(entry);
+            while (feed.children.length > 20) feed.removeChild(feed.lastChild);
+        }
+
+        // ═══ CONNECTION UI ═══
+        function updateConnectionUI(state) {
+            const badge = document.getElementById('connection-badge');
+            const label = document.getElementById('connection-label');
+            const dot = document.getElementById('chain-dot');
+            const status = document.getElementById('chain-status');
+
+            if (state === 'connected') {
+                badge.className = 'hero-badge live';
+                label.textContent = 'Live on-chain';
+                dot.className = 'chain-dot live';
+                status.textContent = 'Producing';
+            } else if (state === 'connecting') {
+                badge.className = 'hero-badge';
+                label.textContent = 'Connecting...';
+                dot.className = 'chain-dot offline';
+                status.textContent = 'Connecting';
+            } else {
+                badge.className = 'hero-badge error';
+                label.textContent = 'Disconnected';
+                dot.className = 'chain-dot offline';
+                status.textContent = 'Offline';
+            }
+        }
+
+        // ═══ CONNECT AND PLAY ═══
+        async function connectAndPlay() {
+            const btn = document.getElementById('connect-btn');
+            const statusEl = document.getElementById('connect-status');
+            const errorEl = document.getElementById('connect-error');
+
+            btn.disabled = true;
+            errorEl.textContent = '';
+            updateConnectionUI('connecting');
+
+            try {
+                // Step 1: Connect raw WebSocket
+                statusEl.textContent = 'Connecting to node...';
+                await connectRawWs();
+
+                // Step 2: Connect polkadot.js API
+                statusEl.textContent = 'Loading runtime metadata...';
+                const { ApiPromise, WsProvider, Keyring } = polkadotApi;
+                const provider = new WsProvider(NODE_WS);
+                api = await ApiPromise.create({ provider });
+
+                // Step 3: Set up Alice account
+                statusEl.textContent = 'Setting up account...';
+                const keyring = new Keyring({ type: 'sr25519' });
+                account = keyring.addFromUri('//Alice');
+                document.getElementById('account-display').textContent =
+                    account.address.slice(0, 6) + '...' + account.address.slice(-4);
+
+                // Step 4: Get chain info
+                const chain = await api.rpc.system.chain();
+                const version = await api.rpc.system.version();
+                const health = await api.rpc.system.health();
+                document.getElementById('runtime-name').textContent = chain.toString().slice(0, 12);
+                document.getElementById('peer-count').textContent = health.peers.toString();
+
+                connected = true;
+                updateConnectionUI('connected');
+
+                // Step 5: Check player cap
+                statusEl.textContent = 'Checking player slots...';
+                const hasSlot = await checkPlayerCap();
+                if (!hasSlot) {
+                    errorEl.textContent = 'Game full — ' + MAX_PLAYERS + '/' + MAX_PLAYERS + ' players active';
+                    btn.disabled = false;
+                    btn.textContent = 'Retry';
+                    statusEl.textContent = 'No slots available';
+                    return;
+                }
+
+                // Step 6: Start new game
+                statusEl.textContent = 'Starting game on-chain...';
+                await api.tx.doom.newGame().signAndSend(account, { nonce: -1 });
+                totalExtSent++;
+                document.getElementById('ext-count').textContent = totalExtSent;
+
+                gameActive = true;
+
+                // Step 7: Subscribe to blocks and start rendering
+                subscribeBlocks();
+                resetStallTimer();
+
+                // Step 8: Input loop — submit inputs at fixed rate
+                setInterval(submitInputs, 100); // 10 inputs/sec max
+
+                // Hide overlay
+                document.getElementById('connect-overlay').classList.add('hidden');
+
+            } catch (e) {
+                console.error('Connection failed:', e);
+                errorEl.textContent = e.message || 'Connection failed';
+                btn.disabled = false;
+                updateConnectionUI('disconnected');
+                statusEl.textContent = 'Failed — click to retry';
+            }
+        }
+
+        // ═══ RESTART ═══
+        window.restartGame = async () => {
+            if (!api || !account) return;
+            try {
+                await api.tx.doom.resetGame().signAndSend(account, { nonce: -1 });
+                totalExtSent++;
+                await api.tx.doom.newGame().signAndSend(account, { nonce: -1 });
+                totalExtSent++;
+                document.getElementById('ext-count').textContent = totalExtSent;
+                document.getElementById('status-msg').textContent = '';
+                document.getElementById('restart-btn').style.display = 'none';
+            } catch (e) {
+                console.warn('Restart failed:', e.message);
+            }
+        };
+
+        // ═══ INIT ═══
+        // Try auto-connect on page load
+        (async () => {
+            const statusEl = document.getElementById('connect-status');
+            try {
+                // Quick check if node is reachable
+                statusEl.textContent = 'Checking node...';
+                const testWs = new WebSocket(NODE_WS);
+                await new Promise((resolve, reject) => {
+                    testWs.onopen = () => { testWs.close(); resolve(); };
+                    testWs.onerror = () => reject();
+                    setTimeout(reject, 3000);
+                });
+                statusEl.textContent = 'Node is live — click to play';
+                updateConnectionUI('connecting');
+            } catch {
+                statusEl.textContent = 'Node offline — click to retry';
+            }
+        })();
+    </script>
+</body>
+</html>
