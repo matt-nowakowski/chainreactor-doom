@@ -1092,7 +1092,7 @@ fn render_stbar_face(state: &GameState, fb: &mut Framebuffer, bar_y: usize) {
     let h = face.height as usize;
 
     // Center in the STBAR center panel (x=104..174)
-    let center_x: usize = 161;
+    let center_x: usize = 160;
     let fx = center_x.saturating_sub(w / 2);
     let fy = bar_y + 2;
 
@@ -1173,7 +1173,7 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
                 let right_wall = matches!(right, TileType::Wall(_));
                 if is_wall != right_wall || is_door || matches!(right, TileType::Door(_)) {
                     let (r, g, b) = edge_color(tile, right);
-                    for dy in 0..cell {
+                    for dy in 0..=cell {
                         fb.set_rgb(sx + cell, sy + dy, r, g, b);
                     }
                 }
@@ -1184,7 +1184,7 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
                 let below_wall = matches!(below, TileType::Wall(_));
                 if is_wall != below_wall || is_door || matches!(below, TileType::Door(_)) {
                     let (r, g, b) = edge_color(tile, below);
-                    for dx in 0..cell {
+                    for dx in 0..=cell {
                         fb.set_rgb(sx + dx, sy + cell, r, g, b);
                     }
                 }
@@ -1240,7 +1240,7 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
     let player_sx = offset_x + (state.player.x as usize / FP_SCALE as usize) * cell + cell / 2;
     let player_sy = offset_y + (state.player.y as usize / FP_SCALE as usize) * cell + cell / 2;
     let angle = state.player.angle as f64 / 1000.0;
-    let arrow_len = cell as f64 * 1.5;
+    let arrow_len = cell as f64 * 0.9;
 
     // Arrow body
     let tip_x = player_sx as f64 + angle.cos() * arrow_len;
