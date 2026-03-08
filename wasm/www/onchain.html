@@ -741,6 +741,8 @@
     <!-- ═══ POLKADOT.JS API ═══ -->
     <script src="https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/bundle-polkadot-util.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@polkadot/util-crypto@12.6.2/bundle-polkadot-util-crypto.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/types@10.13.1/bundle-polkadot-types.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.6.2/bundle-polkadot-keyring.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@polkadot/api@10.13.1/bundle-polkadot-api.min.js"></script>
 
     <script>
@@ -1107,13 +1109,12 @@
 
                 // Step 2: Connect polkadot.js API
                 statusEl.textContent = 'Loading runtime metadata...';
-                const { ApiPromise, WsProvider, Keyring } = polkadotApi;
-                const provider = new WsProvider(NODE_WS);
-                api = await ApiPromise.create({ provider });
+                const provider = new polkadotApi.WsProvider(NODE_WS);
+                api = await polkadotApi.ApiPromise.create({ provider });
 
                 // Step 3: Set up Alice account
                 statusEl.textContent = 'Setting up account...';
-                const keyring = new Keyring({ type: 'sr25519' });
+                const keyring = new polkadotKeyring.Keyring({ type: 'sr25519' });
                 account = keyring.addFromUri('//Alice');
                 document.getElementById('account-display').textContent =
                     account.address.slice(0, 6) + '...' + account.address.slice(-4);
