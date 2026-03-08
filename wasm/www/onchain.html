@@ -191,41 +191,13 @@
         .title-screen {
             position: absolute; inset: 0;
             background: #000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 30; cursor: pointer;
-            image-rendering: pixelated;
         }
         .title-screen.hidden { display: none; }
-        .title-logo {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 700; text-transform: uppercase;
-            letter-spacing: 4px; text-align: center;
-        }
-        .title-logo-line1 {
-            font-size: 42px; color: #C02020;
-            text-shadow: 2px 2px 0 #600, -1px -1px 0 #F44;
-        }
-        .title-logo-line2 {
-            font-size: 42px; color: #C02020;
-            text-shadow: 2px 2px 0 #600, -1px -1px 0 #F44;
-            margin-top: -4px;
-        }
-        .title-press-key {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px; color: #A0A0A0;
-            margin-top: 24px; letter-spacing: 2px;
-            animation: blink-text 1s step-end infinite;
-        }
-        @keyframes blink-text {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        .title-red-band {
-            position: absolute;
-            top: 50%; transform: translateY(-50%);
-            width: 85%; height: 100px;
-            background: rgba(30, 0, 0, 1);
-            z-index: -1;
+        .title-canvas {
+            width: 100%; height: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
         .connect-overlay {
             position: absolute; inset: 0; z-index: 15;
@@ -615,17 +587,12 @@
                         <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
                     </div>
 
-                    <!-- Title screen overlay (matches engine's render_title_screen) -->
+                    <!-- Title screen overlay (pixel-perfect match of engine's render_title_screen) -->
                     <div class="title-screen" id="title-screen">
-                        <div class="title-red-band"></div>
-                        <div class="title-logo">
-                            <div class="title-logo-line1">CHAIN</div>
-                            <div class="title-logo-line2">REACTOR</div>
-                        </div>
-                        <div class="title-press-key">PRESS ANY KEY</div>
-                        <div class="connect-status" id="connect-status" style="margin-top:12px;"></div>
-                        <div class="connect-error" id="connect-error"></div>
+                        <canvas class="title-canvas" id="title-canvas" width="320" height="200"></canvas>
                     </div>
+                    <div class="connect-status" id="connect-status" style="position:absolute;bottom:24px;left:0;right:0;text-align:center;z-index:35;font-size:11px;color:var(--text-dim);"></div>
+                    <div class="connect-error" id="connect-error" style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:35;font-size:11px;color:var(--red);"></div>
 
                     <div class="status-msg" id="status-msg"></div>
                     <div class="warning-banner" id="warning-banner"></div>
@@ -829,6 +796,129 @@
         ctx.imageSmoothingEnabled = false;
         const imageData = ctx.createImageData(FRAME_WIDTH, FRAME_HEIGHT);
 
+        // ═══ TITLE SCREEN RENDERER (pixel-perfect match of engine) ═══
+        const TITLE_GLYPHS = {
+            C: [0x7FE,0xFFF,0xF03,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF03,0xFFF,0x7FE],
+            H: [0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xFFF,0xFFF,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            A: [0x060,0x0F0,0x1F8,0x3FC,0x79E,0x70E,0xE07,0xE07,0xFFF,0xFFF,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            I: [0x7FE,0x3FC,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x3FC,0x7FE],
+            N: [0xE07,0xF07,0xF87,0xFC7,0xEE7,0xE77,0xE3F,0xE1F,0xE0F,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            R: [0xFFC,0xFFE,0xE0F,0xE07,0xE07,0xE0F,0xFFE,0xFFC,0xFE0,0xE70,0xE38,0xE1C,0xE0E,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            E: [0xFFF,0xFFF,0xF00,0xF00,0xF00,0xF00,0xFFC,0xFFC,0xFFC,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xFFF,0xFFF],
+            T: [0xFFF,0xFFF,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x1F8,0x3FC],
+            O: [0x3FC,0x7FE,0xF0F,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x7FE,0x3FC],
+        };
+        const TITLE_BANDS = [[255,100,0],[230,50,0],[200,20,0],[160,0,0],[120,0,0]];
+        const SMALL_FONT = {
+            P:[0x1E,0x11,0x11,0x1E,0x10,0x10,0x10], R:[0x1E,0x11,0x11,0x1E,0x14,0x12,0x11],
+            E:[0x1F,0x10,0x10,0x1E,0x10,0x10,0x1F], S:[0x0F,0x10,0x10,0x0E,0x01,0x01,0x1E],
+            A:[0x0E,0x11,0x11,0x1F,0x11,0x11,0x11], N:[0x11,0x19,0x15,0x13,0x11,0x11,0x11],
+            Y:[0x11,0x11,0x0A,0x04,0x04,0x04,0x04], K:[0x11,0x12,0x14,0x18,0x14,0x12,0x11],
+            ' ':[0,0,0,0,0,0,0],
+        };
+
+        function renderTitleScreen(tick) {
+            const tc = document.getElementById('title-canvas');
+            const tctx = tc.getContext('2d');
+            const td = tctx.createImageData(320, 200);
+            const d = td.data;
+
+            // Fill black + alpha
+            for (let i = 0; i < 320*200; i++) { d[i*4+3] = 255; }
+
+            // Red band (y=58-141, x=20-299)
+            for (let y = 58; y < 142; y++) {
+                const intensity = (y < 68 || y > 132) ? 15 : 30;
+                for (let x = 20; x < 300; x++) {
+                    d[(y*320+x)*4] = intensity;
+                }
+            }
+
+            // Heat shimmer wave
+            const phase = tick % 32;
+            let wave = 0;
+            if (phase >= 4 && phase < 8) wave = 1;
+            else if (phase >= 8 && phase < 12) wave = 2;
+            else if (phase >= 12 && phase < 16) wave = 1;
+            else if (phase >= 20 && phase < 24) wave = -1;
+            else if (phase >= 24 && phase < 28) wave = -2;
+            else if (phase >= 28) wave = -1;
+
+            const letterW = 12, letterH = 18, scale = 2, gap = 2;
+            const renderedW = letterW * scale;
+
+            function drawLetter(glyph, x, y) {
+                for (let row = 0; row < letterH; row++) {
+                    const bits = glyph[row];
+                    for (let col = 0; col < letterW; col++) {
+                        if (bits & (1 << (letterW - 1 - col))) {
+                            const shifted = Math.max(0, row + wave);
+                            const band = Math.min(4, Math.floor(shifted * 5 / letterH));
+                            const [r,g,b] = TITLE_BANDS[band];
+                            for (let sy = 0; sy < scale; sy++) {
+                                for (let sx = 0; sx < scale; sx++) {
+                                    const px = x + col*scale + sx;
+                                    const py = y + row*scale + sy;
+                                    if (px < 320 && py < 200) {
+                                        const off = (py*320+px)*4;
+                                        d[off]=r; d[off+1]=g; d[off+2]=b;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // "CHAIN" centered at y=60
+            const chain = ['C','H','A','I','N'];
+            const line1W = 5 * renderedW + 4 * gap;
+            const line1X = Math.floor((320 - line1W) / 2);
+            chain.forEach((ch, i) => drawLetter(TITLE_GLYPHS[ch], line1X + i*(renderedW+gap), 60));
+
+            // "REACTOR" centered at y=100
+            const reactor = ['R','E','A','C','T','O','R'];
+            const line2W = 7 * renderedW + 6 * gap;
+            const line2X = Math.floor((320 - line2W) / 2);
+            reactor.forEach((ch, i) => drawLetter(TITLE_GLYPHS[ch], line2X + i*(renderedW+gap), 100));
+
+            // Blinking "PRESS ANY KEY" at y=155
+            if (Math.floor(tick / 8) % 2 === 0) {
+                const text = 'PRESS ANY KEY';
+                const charW = 6;
+                const totalW = text.length * charW;
+                const startX = Math.floor(160 - totalW/2);
+                for (let i = 0; i < text.length; i++) {
+                    const bitmap = SMALL_FONT[text[i]];
+                    if (!bitmap) continue;
+                    const cx = startX + i * charW;
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 5; col++) {
+                            if (bitmap[row] & (1 << (4 - col))) {
+                                const px = cx + col, py = 155 + row;
+                                if (px < 320 && py < 200) {
+                                    const off = (py*320+px)*4;
+                                    d[off]=160; d[off+1]=160; d[off+2]=160;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            tctx.putImageData(td, 0, 0);
+        }
+
+        // Animate title screen
+        let titleTick = 0;
+        let titleAnimId = null;
+        function animateTitle() {
+            if (!onTitleScreen) { titleAnimId = null; return; }
+            renderTitleScreen(titleTick++);
+            titleAnimId = requestAnimationFrame(animateTitle);
+        }
+        animateTitle();
+
         // ═══ SCROLL REVEAL ═══
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
@@ -843,6 +933,7 @@
             // Title screen: any key starts the game
             if (onTitleScreen) {
                 onTitleScreen = false;
+                if (titleAnimId) { cancelAnimationFrame(titleAnimId); titleAnimId = null; }
                 connectAndPlay();
                 return;
             }
@@ -863,6 +954,7 @@
         document.getElementById('title-screen').addEventListener('click', () => {
             if (onTitleScreen) {
                 onTitleScreen = false;
+                if (titleAnimId) { cancelAnimationFrame(titleAnimId); titleAnimId = null; }
                 connectAndPlay();
             }
         });
@@ -1010,6 +1102,8 @@
                         gameActive = false;
                         onTitleScreen = true;
                         document.getElementById('title-screen').classList.remove('hidden');
+                        titleTick = 0;
+                        animateTitle();
                         hideWarning();
                     } catch (e) {
                         console.warn('Idle reset failed:', e.message);
