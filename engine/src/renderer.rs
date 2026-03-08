@@ -1156,46 +1156,53 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
     let offset_y = (VIEW_HEIGHT - map_h * cell) / 2;
 
     // Draw wall edges (line-based like OG DOOM automap)
-    for gy in 0..map_h {
-        for gx in 0..map_w {
-            let tile = state.map.get_tile(gx as u32, gy as u32);
-            let sx = offset_x + gx * cell;
-            let sy = offset_y + gy * cell;
+    // Two passes: red/brown edges first, then yellow door edges on top
+    for pass in 0..2u8 {
+        for gy in 0..map_h {
+            for gx in 0..map_w {
+                let tile = state.map.get_tile(gx as u32, gy as u32);
+                let sx = offset_x + gx * cell;
+                let sy = offset_y + gy * cell;
 
-            let is_wall = matches!(tile, TileType::Wall(_));
-            let is_door = matches!(tile, TileType::Door(_));
-            let is_exit = matches!(tile, TileType::Exit);
+                let is_wall = matches!(tile, TileType::Wall(_));
+                let is_door = matches!(tile, TileType::Door(_));
+                let is_exit = matches!(tile, TileType::Exit);
 
-            // Check each edge: draw line if this cell and neighbor differ
-            // Right edge
-            if gx + 1 < map_w {
-                let right = state.map.get_tile(gx as u32 + 1, gy as u32);
-                let right_wall = matches!(right, TileType::Wall(_));
-                if is_wall != right_wall || is_door || matches!(right, TileType::Door(_)) {
-                    let (r, g, b) = edge_color(tile, right);
-                    for dy in 0..=cell {
-                        fb.set_rgb(sx + cell, sy + dy, r, g, b);
+                // Right edge
+                if gx + 1 < map_w {
+                    let right = state.map.get_tile(gx as u32 + 1, gy as u32);
+                    let right_wall = matches!(right, TileType::Wall(_));
+                    if is_wall != right_wall || is_door || matches!(right, TileType::Door(_)) {
+                        let (r, g, b) = edge_color(tile, right);
+                        let is_yellow = is_door || matches!(right, TileType::Door(_));
+                        if (pass == 0 && !is_yellow) || (pass == 1 && is_yellow) {
+                            for dy in 0..=cell {
+                                fb.set_rgb(sx + cell, sy + dy, r, g, b);
+                            }
+                        }
                     }
                 }
-            }
-            // Bottom edge
-            if gy + 1 < map_h {
-                let below = state.map.get_tile(gx as u32, gy as u32 + 1);
-                let below_wall = matches!(below, TileType::Wall(_));
-                if is_wall != below_wall || is_door || matches!(below, TileType::Door(_)) {
-                    let (r, g, b) = edge_color(tile, below);
-                    for dx in 0..=cell {
-                        fb.set_rgb(sx + dx, sy + cell, r, g, b);
+                // Bottom edge
+                if gy + 1 < map_h {
+                    let below = state.map.get_tile(gx as u32, gy as u32 + 1);
+                    let below_wall = matches!(below, TileType::Wall(_));
+                    if is_wall != below_wall || is_door || matches!(below, TileType::Door(_)) {
+                        let (r, g, b) = edge_color(tile, below);
+                        let is_yellow = is_door || matches!(below, TileType::Door(_));
+                        if (pass == 0 && !is_yellow) || (pass == 1 && is_yellow) {
+                            for dx in 0..=cell {
+                                fb.set_rgb(sx + dx, sy + cell, r, g, b);
+                            }
+                        }
                     }
                 }
-            }
-            // (boundary edges handled by perimeter border below)
 
-            // Exit marker — green filled
-            if is_exit {
-                for dy in 1..cell {
-                    for dx in 1..cell {
-                        fb.set_rgb(sx + dx, sy + dy, 0, 160, 0);
+                // Exit marker — green filled (only on first pass)
+                if pass == 0 && is_exit {
+                    for dy in 1..cell {
+                        for dx in 1..cell {
+                            fb.set_rgb(sx + dx, sy + dy, 0, 160, 0);
+                        }
                     }
                 }
             }
