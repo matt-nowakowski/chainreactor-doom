@@ -1,3 +1,4 @@
+use crate::assets::faces;
 use crate::assets::flats;
 use crate::assets::palette::PALETTE;
 use crate::assets::sprites;
@@ -110,6 +111,7 @@ struct WallColumn {
     wall_height: usize,
     bright: u8,
     has_hit: bool,
+    hit_sector_has_sky: bool, // true if the wall's sector has ceiling_tex == 255
 }
 
 /// Render a complete frame from the game state.
@@ -188,11 +190,12 @@ pub fn render_frame(state: &GameState, fb: &mut Framebuffer) {
             wall_height: (proj_bot - proj_top).max(1) as usize,
             bright,
             has_hit,
+            hit_sector_has_sky: hit_sector.ceiling_tex == 255,
         });
     }
 
     // 2. Render floor/ceiling for FULL viewport (no gaps at height transitions)
-    render_floors_ceilings_full(state, fb, &col_rays);
+    render_floors_ceilings_full(state, fb, &col_rays, &wall_cols);
 
     // 3. Draw walls ON TOP of floor/ceiling
     for col in 0..SCREEN_WIDTH {
@@ -278,6 +281,7 @@ fn render_floors_ceilings_full(
     state: &GameState,
     fb: &mut Framebuffer,
     col_rays: &[ColumnRay],
+    wall_cols: &[WallColumn],
 ) {
     let view_mid = VIEW_HEIGHT as i32 / 2;
     let px = state.player.x as f64 / FP_SCALE as f64;
@@ -322,7 +326,17 @@ fn render_floors_ceilings_full(
         }
 
         // --- Ceiling (entire top half of viewport) ---
+        // DOOM sky logic: if the wall hit for this column is in a sky sector,
+        // render sky for all ceiling pixels above that wall. Otherwise use flats.
+        let col_has_sky = wall_cols[col].hit_sector_has_sky;
+
         for y in 0..(view_mid as usize) {
+            if col_has_sky {
+                // Sky above — render sky for pixels above the wall
+                render_sky_pixel(fb, col, y, state.player.angle, view_mid as usize);
+                continue;
+            }
+
             let row_dist_from_mid = view_mid - y as i32;
             if row_dist_from_mid <= 0 { continue; }
 
@@ -339,12 +353,6 @@ fn render_floors_ceilings_full(
             }
 
             let sector = state.map.get_sector(gx as u32, gy as u32);
-
-            // Sky sectors (ceiling_tex == 255) — render sky gradient instead of flat
-            if sector.ceiling_tex == 255 {
-                render_sky_pixel(fb, col, y, state.player.angle, view_mid as usize);
-                continue;
-            }
 
             let tx = ((world_x - world_x.floor()) * FLAT_SIZE as f64) as usize % FLAT_SIZE;
             let ty = ((world_y - world_y.floor()) * FLAT_SIZE as f64) as usize % FLAT_SIZE;
@@ -1013,81 +1021,69 @@ fn draw_tiny_digit(fb: &mut Framebuffer, x: usize, y: usize, digit: u8) {
     }
 }
 
-/// Render the DOOM-guy face in the center of the status bar.
-/// Shows different expressions based on health and recent damage.
+/// Render the DOOM-guy face in the center of the status bar using real Freedoom sprites.
+/// STFST00/01/02 = normal (forward/left/right), STFST20 = hurt, STFST40 = critical,
+/// STFOUCH0 = pain, STFKILL0 = rampage, STFDEAD0 = dead.
 fn render_stbar_face(state: &GameState, fb: &mut Framebuffer, bar_y: usize) {
-    // Face sits in center panel of STBAR (x=104..174), centered
-    let face_x: usize = 139;  // center of 104..174
-    let face_y: usize = bar_y + 1;
-    let face_w: usize = 24;
-    let face_h: usize = 29;
-
-    // Choose face state
     let recently_hurt = state.tick.saturating_sub(state.player.last_damage_tick) < 10;
     let health = state.player.health;
 
-    // Background — flesh tone box
-    let bg = if !state.player.alive { (80, 0, 0) }
-        else if recently_hurt { (160, 60, 40) }
-        else { (140, 110, 80) };
+    // Choose face sprite name based on state
+    let face_name = if !state.player.alive {
+        "STFDEAD0"
+    } else if recently_hurt {
+        "STFOUCH0"
+    } else if state.player.kills > 0 && state.tick.saturating_sub(state.player.last_damage_tick) < 30 {
+        "STFKILL0"
+    } else {
+        // Health-based face + direction (0=forward, 1=left, 2=right)
+        let angle_norm = (state.player.angle as usize) % 6283;
+        let dir = if angle_norm < 1047 || angle_norm > 5236 { "0" }
+            else if angle_norm < 3142 { "1" }
+            else { "2" };
+        let level = if health > 60 { "0" }
+            else if health > 40 { "2" }
+            else { "4" };
+        // Build name: STFST + level + dir
+        match (level, dir) {
+            ("0", "0") => "STFST00",
+            ("0", "1") => "STFST01",
+            ("0", "2") => "STFST02",
+            ("2", "0") => "STFST20",
+            ("2", "1") => "STFST21",
+            ("2", "2") => "STFST22",
+            ("4", "0") => "STFST40",
+            ("4", "1") => "STFST41",
+            ("4", "2") => "STFST42",
+            _ => "STFST00",
+        }
+    };
 
-    for y in 0..face_h.min(30) {
-        for x in 0..face_w {
-            let px = face_x.saturating_sub(face_w / 2) + x;
-            let py = face_y + y;
+    let face = match faces::find_face(face_name) {
+        Some(f) => f,
+        None => return, // no sprite found, skip
+    };
+
+    let w = face.width as usize;
+    let h = face.height as usize;
+
+    // Center in the STBAR center panel (x=104..174)
+    let center_x: usize = 139;
+    let fx = center_x.saturating_sub(w / 2);
+    let fy = bar_y + 2;
+
+    for dy in 0..h {
+        for dx in 0..w {
+            let idx = dy * w + dx;
+            if idx >= face.data.len() { continue; }
+            let pal_idx = face.data[idx];
+            if pal_idx == 255 { continue; } // transparent
+            let px = fx + dx;
+            let py = fy + dy;
             if px < SCREEN_WIDTH && py < SCREEN_HEIGHT {
-                fb.set_rgb(px, py, bg.0, bg.1, bg.2);
+                fb.set_pal_full(px, py, pal_idx);
             }
         }
-    }
-
-    let fx = face_x.saturating_sub(face_w / 2);
-    let fy = face_y;
-
-    if !state.player.alive {
-        // Dead face — X eyes, flat mouth
-        draw_face_pixel_block(fb, fx + 6, fy + 8, 3, 3, 160, 0, 0);   // left X eye
-        draw_face_pixel_block(fb, fx + 15, fy + 8, 3, 3, 160, 0, 0);  // right X eye
-        draw_face_pixel_block(fb, fx + 8, fy + 20, 8, 2, 100, 0, 0);  // flat mouth
-    } else if recently_hurt {
-        // Pain face — squinting eyes, open mouth
-        draw_face_pixel_block(fb, fx + 6, fy + 10, 4, 2, 40, 20, 10);  // left squint
-        draw_face_pixel_block(fb, fx + 14, fy + 10, 4, 2, 40, 20, 10); // right squint
-        draw_face_pixel_block(fb, fx + 9, fy + 18, 6, 4, 100, 20, 20); // open mouth
-        // Teeth
-        draw_face_pixel_block(fb, fx + 10, fy + 19, 4, 1, 220, 220, 200);
-    } else if health > 60 {
-        // Normal face — round eyes, slight grin
-        draw_face_pixel_block(fb, fx + 7, fy + 8, 3, 4, 255, 255, 255); // left eye white
-        draw_face_pixel_block(fb, fx + 14, fy + 8, 3, 4, 255, 255, 255); // right eye white
-        // Pupils shift based on player angle
-        let pupil_off = ((state.player.angle % 3142) > 1571) as usize;
-        draw_face_pixel_block(fb, fx + 7 + pupil_off, fy + 9, 2, 2, 30, 20, 10);
-        draw_face_pixel_block(fb, fx + 14 + pupil_off, fy + 9, 2, 2, 30, 20, 10);
-        // Grin
-        draw_face_pixel_block(fb, fx + 8, fy + 19, 8, 2, 120, 40, 30);
-        draw_face_pixel_block(fb, fx + 9, fy + 19, 6, 1, 200, 180, 160); // teeth
-    } else if health > 30 {
-        // Worried face — wider eyes, frown
-        draw_face_pixel_block(fb, fx + 6, fy + 7, 4, 5, 255, 255, 255);
-        draw_face_pixel_block(fb, fx + 14, fy + 7, 4, 5, 255, 255, 255);
-        draw_face_pixel_block(fb, fx + 7, fy + 8, 2, 3, 30, 20, 10);
-        draw_face_pixel_block(fb, fx + 15, fy + 8, 2, 3, 30, 20, 10);
-        draw_face_pixel_block(fb, fx + 9, fy + 20, 6, 2, 100, 40, 30);
-    } else {
-        // Critical face — bloodied, grimace
-        draw_face_pixel_block(fb, fx + 6, fy + 8, 4, 4, 200, 200, 200);
-        draw_face_pixel_block(fb, fx + 14, fy + 8, 4, 4, 200, 200, 200);
-        draw_face_pixel_block(fb, fx + 7, fy + 9, 2, 2, 30, 20, 10);
-        draw_face_pixel_block(fb, fx + 15, fy + 9, 2, 2, 30, 20, 10);
-        // Blood drip
-        draw_face_pixel_block(fb, fx + 11, fy + 5, 2, 8, 180, 0, 0);
-        draw_face_pixel_block(fb, fx + 8, fy + 20, 8, 3, 120, 20, 20);
-    }
-
-    // Nose (always)
-    if state.player.alive {
-        draw_face_pixel_block(fb, fx + 10, fy + 14, 4, 3, bg.0.saturating_sub(20), bg.1.saturating_sub(15), bg.2.saturating_sub(10));
     }
 }
 
@@ -1113,125 +1109,194 @@ fn render_sky_pixel(fb: &mut Framebuffer, col: usize, y: usize, player_angle: i3
     }
 }
 
-/// Helper: draw a filled rectangle of pixels for the face.
-#[inline]
-fn draw_face_pixel_block(fb: &mut Framebuffer, x: usize, y: usize, w: usize, h: usize, r: u8, g: u8, b: u8) {
-    for dy in 0..h {
-        for dx in 0..w {
-            fb.set_rgb(x + dx, y + dy, r, g, b);
-        }
-    }
-}
-
-/// Render automap overlay — wireframe map with player position and enemies.
+/// Render automap overlay — OG DOOM style: black background, colored line walls.
+/// Red = impassable walls, yellow = height changes, brown = two-sided lines,
+/// green = player arrow, gray = doors.
 pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
-    // Semi-transparent dark overlay
+    // Black background over viewport
     for y in 0..VIEW_HEIGHT {
         for x in 0..SCREEN_WIDTH {
-            let off = (y * SCREEN_WIDTH + x) * 4;
-            if off + 3 < fb.rgba.len() {
-                fb.rgba[off] = fb.rgba[off] / 4;
-                fb.rgba[off + 1] = fb.rgba[off + 1] / 4;
-                fb.rgba[off + 2] = fb.rgba[off + 2] / 4;
-            }
+            fb.set_rgb(x, y, 0, 0, 0);
         }
     }
 
     let map_w = state.map.width as usize;
     let map_h = state.map.height as usize;
 
-    // Scale to fit viewport
-    let cell_w = SCREEN_WIDTH / map_w;
-    let cell_h = VIEW_HEIGHT / map_h;
-    let cell = cell_w.min(cell_h).max(1);
+    // Scale to fit viewport with padding
+    let cell_w = (SCREEN_WIDTH - 8) / map_w;
+    let cell_h = (VIEW_HEIGHT - 8) / map_h;
+    let cell = cell_w.min(cell_h).max(2);
 
     let offset_x = (SCREEN_WIDTH - map_w * cell) / 2;
     let offset_y = (VIEW_HEIGHT - map_h * cell) / 2;
 
-    // Draw grid
+    // Draw wall edges (line-based like OG DOOM automap)
     for gy in 0..map_h {
         for gx in 0..map_w {
             let tile = state.map.get_tile(gx as u32, gy as u32);
             let sx = offset_x + gx * cell;
             let sy = offset_y + gy * cell;
 
-            let (r, g, b) = match tile {
-                TileType::Wall(_) => (80, 80, 80),
-                TileType::Door(_) => (180, 130, 30),
-                TileType::Exit => (0, 200, 0),
-                TileType::Empty => (20, 20, 30),
-            };
+            let is_wall = matches!(tile, TileType::Wall(_));
+            let is_door = matches!(tile, TileType::Door(_));
+            let is_exit = matches!(tile, TileType::Exit);
 
-            for dy in 0..cell {
+            // Check each edge: draw line if this cell and neighbor differ
+            // Right edge
+            if gx + 1 < map_w {
+                let right = state.map.get_tile(gx as u32 + 1, gy as u32);
+                let right_wall = matches!(right, TileType::Wall(_));
+                if is_wall != right_wall || is_door || matches!(right, TileType::Door(_)) {
+                    let (r, g, b) = edge_color(tile, right);
+                    for dy in 0..cell {
+                        fb.set_rgb(sx + cell, sy + dy, r, g, b);
+                    }
+                }
+            }
+            // Bottom edge
+            if gy + 1 < map_h {
+                let below = state.map.get_tile(gx as u32, gy as u32 + 1);
+                let below_wall = matches!(below, TileType::Wall(_));
+                if is_wall != below_wall || is_door || matches!(below, TileType::Door(_)) {
+                    let (r, g, b) = edge_color(tile, below);
+                    for dx in 0..cell {
+                        fb.set_rgb(sx + dx, sy + cell, r, g, b);
+                    }
+                }
+            }
+            // Left edge (boundary)
+            if gx == 0 && is_wall {
+                for dy in 0..cell {
+                    fb.set_rgb(sx, sy + dy, 180, 0, 0);
+                }
+            }
+            // Top edge (boundary)
+            if gy == 0 && is_wall {
                 for dx in 0..cell {
-                    fb.set_rgb(sx + dx, sy + dy, r, g, b);
+                    fb.set_rgb(sx + dx, sy, 180, 0, 0);
                 }
             }
 
-            // Wall borders — draw right and bottom edges
-            if matches!(tile, TileType::Wall(_)) {
-                // Right edge
-                if gx + 1 < map_w && !matches!(state.map.get_tile(gx as u32 + 1, gy as u32), TileType::Wall(_)) {
-                    for dy in 0..cell {
-                        fb.set_rgb(sx + cell - 1, sy + dy, 160, 160, 160);
-                    }
-                }
-                // Bottom edge
-                if gy + 1 < map_h && !matches!(state.map.get_tile(gx as u32, gy as u32 + 1), TileType::Wall(_)) {
-                    for dx in 0..cell {
-                        fb.set_rgb(sx + dx, sy + cell - 1, 160, 160, 160);
+            // Exit marker — green filled
+            if is_exit {
+                for dy in 1..cell {
+                    for dx in 1..cell {
+                        fb.set_rgb(sx + dx, sy + dy, 0, 160, 0);
                     }
                 }
             }
         }
     }
 
-    // Draw items (yellow dots)
+    // Draw things — triangular markers like OG DOOM
+    // Items: small yellow triangles
     for item in &state.items {
         if item.picked_up { continue; }
-        let gx = (item.x / FP_SCALE) as usize;
-        let gy = (item.y / FP_SCALE) as usize;
-        let sx = offset_x + gx * cell + cell / 2;
-        let sy = offset_y + gy * cell + cell / 2;
-        fb.set_rgb(sx, sy, 255, 255, 0);
-        if cell > 2 {
-            fb.set_rgb(sx + 1, sy, 255, 255, 0);
-            fb.set_rgb(sx, sy + 1, 255, 255, 0);
-        }
+        let sx = offset_x + (item.x as usize / FP_SCALE as usize) * cell + cell / 2;
+        let sy = offset_y + (item.y as usize / FP_SCALE as usize) * cell + cell / 2;
+        automap_dot(fb, sx, sy, 255, 255, 0);
     }
 
-    // Draw enemies (red dots for alive, dark red for dead)
+    // Enemies: red triangles (alive) or dark (dead)
     for enemy in &state.enemies {
-        let gx = (enemy.x / FP_SCALE) as usize;
-        let gy = (enemy.y / FP_SCALE) as usize;
-        let sx = offset_x + gx * cell + cell / 2;
-        let sy = offset_y + gy * cell + cell / 2;
-        let (r, g, b) = if enemy.is_alive() { (255, 0, 0) } else { (80, 0, 0) };
-        fb.set_rgb(sx, sy, r, g, b);
-        if cell > 2 {
-            fb.set_rgb(sx + 1, sy, r, g, b);
-            fb.set_rgb(sx, sy + 1, r, g, b);
-            fb.set_rgb(sx + 1, sy + 1, r, g, b);
+        let sx = offset_x + (enemy.x as usize / FP_SCALE as usize) * cell + cell / 2;
+        let sy = offset_y + (enemy.y as usize / FP_SCALE as usize) * cell + cell / 2;
+        if enemy.is_alive() {
+            automap_triangle(fb, sx, sy, 0.0, 255, 60, 0);
+        } else {
+            automap_dot(fb, sx, sy, 80, 0, 0);
         }
     }
 
-    // Draw player (green arrow)
-    let pgx = (state.player.x / FP_SCALE) as usize;
-    let pgy = (state.player.y / FP_SCALE) as usize;
-    let px = offset_x + pgx * cell + cell / 2;
-    let py = offset_y + pgy * cell + cell / 2;
-    // Player dot
-    for dy in 0..3usize {
-        for dx in 0..3usize {
-            fb.set_rgb(px.saturating_sub(1) + dx, py.saturating_sub(1) + dy, 0, 255, 0);
+    // Player: green arrow (OG DOOM's signature automap element)
+    let player_sx = offset_x + (state.player.x as usize / FP_SCALE as usize) * cell + cell / 2;
+    let player_sy = offset_y + (state.player.y as usize / FP_SCALE as usize) * cell + cell / 2;
+    let angle = state.player.angle as f64 / 1000.0;
+    let arrow_len = cell as f64 * 1.5;
+
+    // Arrow body
+    let tip_x = player_sx as f64 + angle.cos() * arrow_len;
+    let tip_y = player_sy as f64 + angle.sin() * arrow_len;
+    automap_line(fb, player_sx, player_sy, tip_x as usize, tip_y as usize, 0, 255, 0);
+
+    // Arrow wings (±140° from forward)
+    let wing_angle_l = angle + 2.44; // ~140°
+    let wing_angle_r = angle - 2.44;
+    let wing_len = arrow_len * 0.5;
+    let wl_x = player_sx as f64 + wing_angle_l.cos() * wing_len;
+    let wl_y = player_sy as f64 + wing_angle_l.sin() * wing_len;
+    let wr_x = player_sx as f64 + wing_angle_r.cos() * wing_len;
+    let wr_y = player_sy as f64 + wing_angle_r.sin() * wing_len;
+    automap_line(fb, player_sx, player_sy, wl_x as usize, wl_y as usize, 0, 255, 0);
+    automap_line(fb, player_sx, player_sy, wr_x as usize, wr_y as usize, 0, 255, 0);
+}
+
+/// OG DOOM automap edge color based on tile types.
+fn edge_color(a: TileType, b: TileType) -> (u8, u8, u8) {
+    let a_wall = matches!(a, TileType::Wall(_));
+    let b_wall = matches!(b, TileType::Wall(_));
+    let a_door = matches!(a, TileType::Door(_));
+    let b_door = matches!(b, TileType::Door(_));
+
+    if a_door || b_door {
+        (220, 170, 50)  // yellow — doors
+    } else if a_wall || b_wall {
+        (180, 0, 0)     // red — solid walls (OG DOOM red)
+    } else {
+        (120, 80, 40)   // brown — two-sided lines (height changes)
+    }
+}
+
+/// Draw a small triangle marker on the automap.
+fn automap_triangle(fb: &mut Framebuffer, cx: usize, cy: usize, angle: f64, r: u8, g: u8, b: u8) {
+    let size = 2.0;
+    for i in 0..3 {
+        let a = angle + (i as f64) * 2.094; // 120° apart
+        let px = (cx as f64 + a.cos() * size) as usize;
+        let py = (cy as f64 + a.sin() * size) as usize;
+        if px < SCREEN_WIDTH && py < VIEW_HEIGHT {
+            fb.set_rgb(px, py, r, g, b);
         }
     }
-    // Direction indicator
-    let angle = state.player.angle as f64 / 1000.0;
-    let tip_x = (px as f64 + angle.cos() * (cell as f64 * 1.5)) as usize;
-    let tip_y = (py as f64 + angle.sin() * (cell as f64 * 1.5)) as usize;
-    if tip_x < SCREEN_WIDTH && tip_y < VIEW_HEIGHT {
-        fb.set_rgb(tip_x, tip_y, 0, 255, 0);
+    // Center dot
+    fb.set_rgb(cx, cy, r, g, b);
+}
+
+/// Draw a dot marker on the automap.
+fn automap_dot(fb: &mut Framebuffer, x: usize, y: usize, r: u8, g: u8, b: u8) {
+    if x < SCREEN_WIDTH && y < VIEW_HEIGHT {
+        fb.set_rgb(x, y, r, g, b);
+    }
+    if x + 1 < SCREEN_WIDTH && y < VIEW_HEIGHT {
+        fb.set_rgb(x + 1, y, r, g, b);
+    }
+}
+
+/// Draw a line on the automap using Bresenham's algorithm.
+fn automap_line(fb: &mut Framebuffer, x0: usize, y0: usize, x1: usize, y1: usize, r: u8, g: u8, b: u8) {
+    let mut x = x0 as i32;
+    let mut y = y0 as i32;
+    let dx = (x1 as i32 - x0 as i32).abs();
+    let dy = -(y1 as i32 - y0 as i32).abs();
+    let sx = if x0 < x1 { 1i32 } else { -1 };
+    let sy = if y0 < y1 { 1i32 } else { -1 };
+    let mut err = dx + dy;
+
+    for _ in 0..200 {
+        if x >= 0 && y >= 0 && (x as usize) < SCREEN_WIDTH && (y as usize) < VIEW_HEIGHT {
+            fb.set_rgb(x as usize, y as usize, r, g, b);
+        }
+        if x == x1 as i32 && y == y1 as i32 { break; }
+        let e2 = 2 * err;
+        if e2 >= dy {
+            err += dy;
+            x += sx;
+        }
+        if e2 <= dx {
+            err += dx;
+            y += sy;
+        }
     }
 }
 

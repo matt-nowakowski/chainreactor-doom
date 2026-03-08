@@ -5,3 +5,4 @@ pub mod flats;
 pub mod sprites;
 pub mod stbar;
 pub mod sttnum;
+pub mod faces;
