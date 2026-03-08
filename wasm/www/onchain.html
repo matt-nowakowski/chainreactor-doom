@@ -770,11 +770,13 @@
         let nonce = null;
         let sendingInput = false;
         let stallTimer = null;
-        const STALL_THRESHOLD_MS = 5000; // 10x the 500ms block time
+        const STALL_THRESHOLD_MS = 2000; // 10x the 200ms block time
         const MAX_PLAYERS = 32;
         let idleTimer = null;
         const IDLE_TIMEOUT_MS = 120000; // 2 minutes with no input → auto-reset
         let lastInputTime = 0;
+        let gameEnded = false; // true when player died or completed level
+        let lastFrameHex = null; // cache last frame for death/victory freeze
 
         // ═══ DOM ═══
         const canvas = document.getElementById('game-canvas');
@@ -948,6 +950,8 @@
 
         // ═══ FRAME RENDERING ═══
         async function fetchAndRenderFrame() {
+            if (gameEnded) return; // stop fetching after death/victory
+
             try {
                 const startTime = performance.now();
                 const hexData = await rpcCall('doom_renderFrame', [account.address]);
@@ -955,9 +959,15 @@
                 document.getElementById('latency').textContent = latency + ' ms';
 
                 if (!hexData || hexData === '0x' || hexData.length < 10) {
-                    if (totalFrames === 0) console.log('renderFrame returned empty:', hexData);
+                    // Game may have ended (pallet removed player from ActivePlayers)
+                    if (totalFrames > 0 && !gameEnded) {
+                        gameEnded = true;
+                        showGameEndOverlay();
+                    }
                     return;
                 }
+
+                lastFrameHex = hexData;
 
                 // Decode hex RGBA → canvas
                 const hex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
@@ -973,13 +983,70 @@
                     document.getElementById('frame-count').textContent = totalFrames;
                 }
             } catch (e) {
-                // Silent fail on frame fetch — will retry next block
+                // RPC error "No active game" means game ended
+                if (e.message && e.message.includes('No active game') && totalFrames > 0) {
+                    gameEnded = true;
+                    showGameEndOverlay();
+                }
+            }
+        }
+
+        function showGameEndOverlay() {
+            gameActive = false;
+            const overlay = document.createElement('div');
+            overlay.id = 'game-end-overlay';
+            overlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:50;';
+            overlay.innerHTML = `
+                <div style="color:#EF4444;font-size:28px;font-weight:900;font-style:italic;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">GAME OVER</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Press any key or click to restart</div>
+            `;
+            canvas.parentElement.style.position = 'relative';
+            canvas.parentElement.appendChild(overlay);
+
+            const restart = () => {
+                overlay.remove();
+                document.removeEventListener('keydown', restart);
+                restartGame();
+            };
+            overlay.addEventListener('click', restart);
+            document.addEventListener('keydown', restart);
+        }
+
+        async function restartGame() {
+            gameEnded = false;
+            gameActive = false;
+            document.getElementById('status-msg').textContent = 'Restarting...';
+            try {
+                await new Promise((resolve, reject) => {
+                    api.tx.doom.resetGame().signAndSend(account, { nonce: -1 }, ({ status, dispatchError }) => {
+                        if (dispatchError) {
+                            if (dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(dispatchError.asModule);
+                                reject(new Error(decoded.section + '.' + decoded.name));
+                            } else {
+                                reject(new Error(dispatchError.toString()));
+                            }
+                            return;
+                        }
+                        if (status.isInBlock) {
+                            totalExtSent++;
+                            document.getElementById('ext-count').textContent = totalExtSent;
+                            resolve();
+                        }
+                    }).catch(reject);
+                });
+                gameActive = true;
+                document.getElementById('status-msg').textContent = '';
+                resetIdleTimer();
+            } catch (e) {
+                console.warn('Restart failed:', e.message);
+                document.getElementById('status-msg').textContent = 'Restart failed: ' + e.message;
             }
         }
 
         // ═══ INPUT SUBMISSION ═══
         async function submitInputs() {
-            if (sendingInput || !gameActive || !api) return;
+            if (sendingInput || !gameActive || !api || gameEnded) return;
 
             const inputs = collectInputs();
             if (inputs.length === 0) return;
@@ -1143,11 +1210,14 @@
                     return;
                 }
 
-                // Step 6: Start new game
-                statusEl.textContent = 'Starting game on-chain...';
+                // Step 6: Start or reset game
+                const hasExisting = await rpcCall('doom_hasActiveGame', [account.address]);
+                const gameTx = hasExisting
+                    ? (statusEl.textContent = 'Resetting existing game...', api.tx.doom.resetGame())
+                    : (statusEl.textContent = 'Starting game on-chain...', api.tx.doom.newGame());
                 await new Promise((resolve, reject) => {
-                    api.tx.doom.newGame().signAndSend(account, { nonce: -1 }, ({ status, events, dispatchError }) => {
-                        console.log('newGame status:', status.type);
+                    gameTx.signAndSend(account, { nonce: -1 }, ({ status, events, dispatchError }) => {
+                        console.log('game tx status:', status.type);
                         if (dispatchError) {
                             if (dispatchError.isModule) {
                                 const decoded = api.registry.findMetaError(dispatchError.asModule);
@@ -1160,7 +1230,7 @@
                             return;
                         }
                         if (status.isInBlock) {
-                            console.log('newGame included in block:', status.asInBlock.toHex());
+                            console.log('game tx included in block:', status.asInBlock.toHex());
                             totalExtSent++;
                             document.getElementById('ext-count').textContent = totalExtSent;
                             resolve();
@@ -1175,8 +1245,8 @@
                 resetStallTimer();
                 resetIdleTimer();
 
-                // Step 8: Input loop — submit inputs at fixed rate
-                setInterval(submitInputs, 100); // 10 inputs/sec max
+                // Step 8: Input loop — one submit per block (200ms)
+                setInterval(submitInputs, 200);
 
                 // Hide overlay
                 document.getElementById('connect-overlay').classList.add('hidden');
