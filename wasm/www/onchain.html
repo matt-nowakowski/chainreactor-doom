@@ -1324,7 +1324,34 @@
                 document.getElementById('account-display').textContent =
                     account.address.slice(0, 6) + '...' + account.address.slice(-4);
 
-                // Step 4: Get chain info
+                // Step 4: Check balance & top up if needed
+                statusEl.textContent = 'Checking balance...';
+                const { data: balance } = await api.query.system.account(account.address);
+                const free = BigInt(balance.free.toString());
+                // Threshold: enough for ~1000 games worth of base fees (~1 token)
+                const MIN_BALANCE = BigInt('10000000000'); // 1 token (10 decimals)
+                const TOP_UP_AMOUNT = BigInt('1000000000000000'); // 100k tokens
+                if (free < MIN_BALANCE) {
+                    statusEl.textContent = 'Topping up balance via sudo...';
+                    console.log('Balance low (' + free.toString() + '), topping up via sudo...');
+                    await new Promise((resolve, reject) => {
+                        api.tx.sudo.sudo(
+                            api.tx.balances.forceSetBalance(account.address, TOP_UP_AMOUNT)
+                        ).signAndSend(account, { nonce: -1 }, ({ status, dispatchError }) => {
+                            if (dispatchError) {
+                                console.warn('Top-up failed:', dispatchError.toString());
+                                resolve(); // non-fatal, continue anyway
+                                return;
+                            }
+                            if (status.isInBlock) {
+                                console.log('Balance topped up successfully');
+                                resolve();
+                            }
+                        }).catch(e => { console.warn('Top-up error:', e); resolve(); });
+                    });
+                }
+
+                // Step 5: Get chain info
                 const chain = await api.rpc.system.chain();
                 const version = await api.rpc.system.version();
                 const health = await api.rpc.system.health();
@@ -1334,7 +1361,7 @@
                 connected = true;
                 updateConnectionUI('connected');
 
-                // Step 5: Check player cap
+                // Step 6: Check player cap
                 statusEl.textContent = 'Checking player slots...';
                 const hasSlot = await checkPlayerCap();
                 if (!hasSlot) {
@@ -1344,7 +1371,7 @@
                     return;
                 }
 
-                // Step 6: Start or reset game
+                // Step 7: Start or reset game
                 const hasExisting = await rpcCall('doom_hasActiveGame', [account.address]);
                 const gameTx = hasExisting
                     ? (statusEl.textContent = 'Resetting existing game...', api.tx.doom.resetGame())
@@ -1374,12 +1401,12 @@
 
                 gameActive = true;
 
-                // Step 7: Subscribe to blocks and start rendering
+                // Step 8: Subscribe to blocks and start rendering
                 subscribeBlocks();
                 resetStallTimer();
                 resetIdleTimer();
 
-                // Step 8: Input loop — one submit per block (200ms)
+                // Step 9: Input loop — one submit per block (200ms)
                 setInterval(submitInputs, 200);
 
                 // Hide title screen
