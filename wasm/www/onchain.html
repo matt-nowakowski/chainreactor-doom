@@ -954,7 +954,10 @@
                 const latency = Math.round(performance.now() - startTime);
                 document.getElementById('latency').textContent = latency + ' ms';
 
-                if (!hexData || hexData === '0x' || hexData.length < 10) return;
+                if (!hexData || hexData === '0x' || hexData.length < 10) {
+                    if (totalFrames === 0) console.log('renderFrame returned empty:', hexData);
+                    return;
+                }
 
                 // Decode hex RGBA → canvas
                 const hex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
@@ -1142,9 +1145,28 @@
 
                 // Step 6: Start new game
                 statusEl.textContent = 'Starting game on-chain...';
-                await api.tx.doom.newGame().signAndSend(account, { nonce: -1 });
-                totalExtSent++;
-                document.getElementById('ext-count').textContent = totalExtSent;
+                await new Promise((resolve, reject) => {
+                    api.tx.doom.newGame().signAndSend(account, { nonce: -1 }, ({ status, events, dispatchError }) => {
+                        console.log('newGame status:', status.type);
+                        if (dispatchError) {
+                            if (dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(dispatchError.asModule);
+                                console.error('Dispatch error:', decoded.section + '.' + decoded.name, decoded.docs.join(' '));
+                                reject(new Error(decoded.section + '.' + decoded.name));
+                            } else {
+                                console.error('Dispatch error:', dispatchError.toString());
+                                reject(new Error(dispatchError.toString()));
+                            }
+                            return;
+                        }
+                        if (status.isInBlock) {
+                            console.log('newGame included in block:', status.asInBlock.toHex());
+                            totalExtSent++;
+                            document.getElementById('ext-count').textContent = totalExtSent;
+                            resolve();
+                        }
+                    }).catch(reject);
+                });
 
                 gameActive = true;
 
