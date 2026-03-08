@@ -159,6 +159,7 @@ pub mod pallet {
         /// Start a new game session. Creates a fresh GameState from the default map.
         #[pallet::call_index(0)]
         #[pallet::weight(Weight::from_parts(50_000_000, 0))]
+        #[pallet::feeless_if(|_origin: &OriginFor<T>| -> bool { true })]
         pub fn new_game(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
@@ -181,6 +182,7 @@ pub mod pallet {
         /// Inputs are queued and processed in the next block's `on_initialize`.
         #[pallet::call_index(1)]
         #[pallet::weight(Weight::from_parts(10_000_000, 0))]
+        #[pallet::feeless_if(|_origin: &OriginFor<T>, _inputs: &BoundedVec<u8, ConstU32<MAX_INPUTS_PER_CALL>>| -> bool { true })]
         pub fn submit_input(
             origin: OriginFor<T>,
             inputs: BoundedVec<u8, ConstU32<MAX_INPUTS_PER_CALL>>,
@@ -196,6 +198,7 @@ pub mod pallet {
         /// Reset the current game (restart level).
         #[pallet::call_index(2)]
         #[pallet::weight(Weight::from_parts(50_000_000, 0))]
+        #[pallet::feeless_if(|_origin: &OriginFor<T>| -> bool { true })]
         pub fn reset_game(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
