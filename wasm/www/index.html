@@ -36,555 +36,511 @@
         }
 
         /* ─── NAV ─── */
-        nav {
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 0 24px;
-        }
+        nav { border-bottom: 1px solid var(--border-subtle); padding: 0 24px; }
 
         .nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 16px 0;
         }
 
         .logo {
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            text-transform: uppercase;
-            font-size: 17px;
-            letter-spacing: -0.02em;
-            color: var(--text);
-            text-decoration: none;
+            font-weight: 900; font-style: italic; text-transform: uppercase;
+            font-size: 17px; letter-spacing: -0.02em;
+            color: var(--text); text-decoration: none;
         }
 
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
 
         .nav-link {
-            font-size: 14px;
-            font-weight: 300;
-            color: var(--text-dim);
-            text-decoration: none;
-            transition: color 0.2s;
+            font-size: 14px; font-weight: 300; color: var(--text-dim);
+            text-decoration: none; transition: color 0.2s;
         }
-
         .nav-link:hover { color: var(--text); }
 
         .nav-btn {
-            font-size: 13px;
-            font-weight: 500;
-            color: white;
-            background: #1A1A1A;
-            border: 1px solid var(--border);
-            padding: 8px 20px;
-            border-radius: 999px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: opacity 0.2s;
+            font-size: 13px; font-weight: 500; color: white;
+            background: #1A1A1A; border: 1px solid var(--border);
+            padding: 8px 20px; border-radius: 999px; cursor: pointer;
+            text-decoration: none; transition: opacity 0.2s;
             font-family: 'Inter', sans-serif;
         }
-
         .nav-btn:hover { opacity: 0.8; }
+
+        /* ─── SECTION SYSTEM ─── */
+        .section { padding: 96px 24px; }
+        .section-inner { max-width: 1200px; margin: 0 auto; }
+        .section-divider { border-top: 1px solid var(--border-subtle); }
 
         /* ─── HERO ─── */
         .hero {
             text-align: center;
-            padding: 64px 24px 0;
-            max-width: 720px;
+            padding: 128px 24px 96px;
+            max-width: 760px;
             margin: 0 auto;
         }
 
         .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--accent);
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.15em; color: var(--accent);
             background: var(--accent-dim);
             border: 1px solid rgba(37, 99, 235, 0.2);
-            padding: 5px 14px;
-            border-radius: 999px;
-            margin-bottom: 24px;
+            padding: 5px 14px; border-radius: 999px; margin-bottom: 28px;
         }
 
         .hero-badge .pulse {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--accent);
-            animation: pulse 2s ease-in-out infinite;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent); animation: pulse 2s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         .hero h1 {
-            font-family: 'Inter', sans-serif;
-            font-size: clamp(2rem, 4.5vw, 3rem);
-            font-weight: 200;
-            line-height: 1.15;
-            letter-spacing: -0.03em;
-            margin-bottom: 16px;
+            font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+            font-weight: 200; line-height: 1.1;
+            letter-spacing: -0.035em; margin-bottom: 20px;
         }
-
         .hero h1 strong { font-weight: 600; }
 
         .hero p {
-            font-size: 15px;
-            font-weight: 300;
-            color: var(--text-muted);
-            line-height: 1.7;
-            max-width: 520px;
-            margin: 0 auto;
+            font-size: 16px; font-weight: 300; color: var(--text-muted);
+            line-height: 1.75; max-width: 540px; margin: 0 auto 32px;
         }
 
-        /* ─── SPECS BAR ─── */
         .specs-bar {
-            display: flex;
-            justify-content: center;
-            gap: 32px;
-            padding: 20px 24px 0;
-            margin-top: 16px;
+            display: flex; justify-content: center; gap: 28px;
+            flex-wrap: wrap;
         }
 
         .spec-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: var(--text-dim);
-            font-weight: 400;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: var(--text-dim);
         }
 
         .spec-item .dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--border);
+            width: 3px; height: 3px; border-radius: 50%; background: var(--border);
         }
 
         .spec-item code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            background: var(--surface);
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--border-subtle);
+            font-family: 'JetBrains Mono', monospace; font-size: 10px;
+            color: var(--text-muted); background: var(--surface);
+            padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);
         }
 
-        /* ─── GAME SECTION ─── */
-        .game-section {
-            max-width: 1080px;
-            margin: 48px auto 0;
-            padding: 0 24px 80px;
+        /* ─── DEMO SECTION ─── */
+        .demo-section {
+            padding: 0 24px 96px;
+        }
+
+        .demo-section .section-inner { max-width: 1080px; }
+
+        .demo-label {
+            text-align: center; margin-bottom: 48px;
+        }
+
+        .demo-label span {
+            font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.2em; color: var(--text-dim);
         }
 
         .game-layout {
-            display: grid;
-            grid-template-columns: 1fr 260px;
-            gap: 16px;
-            align-items: start;
+            display: grid; grid-template-columns: 1fr 260px;
+            gap: 16px; align-items: start;
         }
 
         /* ─── VIEWPORT ─── */
         .viewport-wrapper {
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            background: #000;
+            position: relative; border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border); background: #000;
         }
 
         .viewport-wrapper::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 12px;
-            pointer-events: none;
-            z-index: 2;
+            content: ''; position: absolute; inset: 0; border-radius: 12px;
+            pointer-events: none; z-index: 2;
             box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
         }
 
         #game-canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            aspect-ratio: 320 / 200;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            cursor: crosshair;
+            display: block; width: 100%; height: auto;
+            aspect-ratio: 320 / 200; image-rendering: pixelated;
+            image-rendering: crisp-edges; cursor: crosshair;
         }
 
         .viewport-hud {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            display: flex;
-            gap: 8px;
-            z-index: 5;
+            position: absolute; top: 12px; right: 12px;
+            display: flex; gap: 8px; z-index: 5;
         }
 
         .hud-pill {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--text-dim);
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 3px 8px;
-            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+            color: var(--text-dim); background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 6px;
             border: 1px solid rgba(255,255,255,0.06);
         }
 
-        .viewport-controls-hint {
-            position: absolute;
-            bottom: 44px;
-            left: 12px;
-            z-index: 5;
-        }
+        .viewport-controls-hint { position: absolute; top: 12px; left: 12px; z-index: 5; }
 
         .controls-toggle {
-            font-family: 'Inter', sans-serif;
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--text-dim);
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.08);
-            cursor: pointer;
-            transition: all 0.15s;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+            color: var(--text-dim); background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+            transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.08em;
         }
-
-        .controls-toggle:hover {
-            background: rgba(0, 0, 0, 0.8);
-            color: var(--text-muted);
-        }
+        .controls-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
 
         .status-msg {
-            text-align: center;
-            padding: 8px;
-            font-size: 18px;
+            text-align: center; padding: 8px; font-size: 18px;
             font-family: 'JetBrains Mono', monospace;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            text-shadow: 2px 2px 0 #000;
-            z-index: 10;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            text-shadow: 2px 2px 0 #000; z-index: 10;
         }
-
         .game-over { color: var(--red); }
         .level-complete { color: var(--green); }
 
         /* ─── SIDE PANEL ─── */
-        .side-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .side-panel { display: flex; flex-direction: column; gap: 8px; }
 
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            padding: 14px;
+            background: var(--surface); border: 1px solid var(--border-subtle);
+            border-radius: 10px; padding: 14px;
         }
 
         .card-header {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--text-dim);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--text-dim);
+            margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
         }
 
-        .card-header .icon {
-            width: 14px;
-            height: 14px;
-            opacity: 0.5;
-        }
+        .card-header .icon { width: 14px; height: 14px; opacity: 0.5; }
 
         .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 0;
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 4px 0;
         }
 
-        .stat-label {
-            font-size: 12px;
-            font-weight: 400;
-            color: var(--text-dim);
-        }
+        .stat-label { font-size: 12px; font-weight: 400; color: var(--text-dim); }
 
         .stat-value {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-muted);
+            font-size: 12px; font-weight: 500; color: var(--text-muted);
         }
 
-        /* chain status */
         .chain-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 4px;
+            width: 6px; height: 6px; border-radius: 50%;
+            display: inline-block; margin-right: 4px;
         }
-
         .chain-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
 
-        /* block feed */
         .block-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-height: 200px;
-            overflow-y: auto;
+            display: flex; flex-direction: column; gap: 4px;
+            max-height: 200px; overflow-y: auto;
         }
-
         .block-feed::-webkit-scrollbar { width: 3px; }
         .block-feed::-webkit-scrollbar-track { background: transparent; }
         .block-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
         .block-entry {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 8px;
-            background: var(--surface-2);
-            border-radius: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 8px; background: var(--surface-2); border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px;
         }
-
         .block-entry.latest {
             background: var(--accent-dim);
             border: 1px solid rgba(37, 99, 235, 0.15);
         }
 
-        .block-num {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
+        .block-num { color: var(--text-muted); font-weight: 500; }
+        .block-hash { color: var(--text-dim); }
 
-        .block-hash {
-            color: var(--text-dim);
-            font-weight: 400;
-        }
-
-        .block-time {
-            color: var(--text-dim);
-            font-size: 9px;
-        }
-
-        /* extrinsic count pill */
         .ext-pill {
-            font-size: 9px;
-            color: var(--accent);
-            background: var(--accent-dim);
-            padding: 1px 5px;
-            border-radius: 3px;
-            font-weight: 500;
+            font-size: 9px; color: var(--accent); background: var(--accent-dim);
+            padding: 1px 5px; border-radius: 3px; font-weight: 500;
         }
 
         .restart-btn {
-            width: 100%;
-            font-family: 'Inter', sans-serif;
-            font-size: 12px;
-            font-weight: 500;
-            color: white;
-            background: var(--red);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: none;
-            transition: opacity 0.2s;
+            width: 100%; font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 500; color: white;
+            background: var(--red); border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 0.05em; display: none; transition: opacity 0.2s;
+        }
+        .restart-btn:hover { opacity: 0.85; }
+
+        /* ─── FEATURES SECTION ─── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
         }
 
-        .restart-btn:hover { opacity: 0.85; }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 32px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border);
+            transform: translateY(-2px);
+        }
+
+        .feature-label {
+            font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 16px;
+        }
+
+        .feature-title {
+            font-size: 1.35rem; font-weight: 400;
+            letter-spacing: -0.01em; margin-bottom: 16px; line-height: 1.3;
+        }
+
+        .feature-desc {
+            font-size: 14px; font-weight: 300; line-height: 1.7;
+            color: var(--text-dim);
+        }
+
+        .feature-visual {
+            margin-top: 24px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* animated block strip */
+        .block-strip {
+            display: flex; gap: 3px; align-items: flex-end;
+        }
+
+        .block-strip .bar {
+            width: 6px; border-radius: 2px; background: var(--accent);
+            opacity: 0.3; animation: bar-grow 2s ease-in-out infinite;
+            margin: 0;
+        }
+
+        .block-strip .bar:nth-child(1) { height: 12px; animation-delay: 0s; }
+        .block-strip .bar:nth-child(2) { height: 20px; animation-delay: 0.15s; }
+        .block-strip .bar:nth-child(3) { height: 16px; animation-delay: 0.3s; }
+        .block-strip .bar:nth-child(4) { height: 28px; animation-delay: 0.45s; }
+        .block-strip .bar:nth-child(5) { height: 22px; animation-delay: 0.6s; }
+        .block-strip .bar:nth-child(6) { height: 32px; animation-delay: 0.75s; }
+        .block-strip .bar:nth-child(7) { height: 18px; animation-delay: 0.9s; }
+        .block-strip .bar:nth-child(8) { height: 24px; animation-delay: 1.05s; }
+
+        @keyframes bar-grow {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.7; }
+        }
+
+        /* chain links animation */
+        .chain-links {
+            display: flex; align-items: center; gap: 2px;
+        }
+
+        .chain-link {
+            width: 20px; height: 20px; border: 2px solid var(--accent);
+            border-radius: 6px; opacity: 0.2;
+            animation: link-pulse 3s ease-in-out infinite;
+        }
+
+        .chain-link:nth-child(1) { animation-delay: 0s; }
+        .chain-link:nth-child(2) { animation-delay: 0.2s; }
+        .chain-link:nth-child(3) { animation-delay: 0.4s; }
+        .chain-link:nth-child(4) { animation-delay: 0.6s; }
+        .chain-link:nth-child(5) { animation-delay: 0.8s; }
+        .chain-link:nth-child(6) { animation-delay: 1.0s; }
+
+        .chain-connector {
+            width: 8px; height: 2px; background: var(--accent); opacity: 0.15;
+        }
+
+        @keyframes link-pulse {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+        }
+
+        /* deterministic dots */
+        .det-grid {
+            display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
+        }
+
+        .det-dot {
+            width: 8px; height: 8px; border-radius: 2px;
+            background: var(--accent); opacity: 0.15;
+            animation: det-flash 4s ease-in-out infinite;
+        }
+
+        @keyframes det-flash {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.45; }
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+            font-weight: 200;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .section-header p {
+            font-size: 15px; font-weight: 300;
+            color: var(--text-muted); line-height: 1.7;
+            max-width: 480px; margin: 0 auto;
+        }
+
+        /* ─── CTA SECTION ─── */
+        .cta-box {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--surface);
+            padding: 64px 32px 72px;
+            text-align: center;
+        }
+
+        .cta-box h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 200; letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .cta-box p {
+            font-size: 15px; font-weight: 300;
+            color: var(--text-muted); line-height: 1.7;
+            max-width: 420px; margin: 0 auto;
+        }
+
+        .cta-actions {
+            margin-top: 36px;
+            display: flex; align-items: center; justify-content: center; gap: 24px;
+        }
+
+        .cta-link {
+            font-size: 14px; font-weight: 500; color: var(--accent);
+            text-decoration: none; display: flex; align-items: center; gap: 4px;
+            transition: opacity 0.2s;
+        }
+        .cta-link:hover { opacity: 0.7; }
+        .cta-link svg { width: 14px; height: 14px; }
+
+        .cta-btn {
+            font-size: 13px; font-weight: 500; color: white;
+            background: #FAFAFA; color: var(--bg);
+            padding: 10px 24px; border-radius: 999px;
+            text-decoration: none; transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .cta-btn:hover { opacity: 0.85; }
 
         /* ─── CONTROLS MODAL ─── */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 200;
-            display: none;
-            align-items: center;
-            justify-content: center;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 200; display: none; align-items: center; justify-content: center;
         }
-
         .modal-overlay.open { display: flex; }
 
         .modal {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px;
-            width: 360px;
-            max-width: 90vw;
-            position: relative;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 28px; width: 360px;
+            max-width: 90vw; position: relative;
         }
 
-        .modal-title {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            letter-spacing: -0.01em;
-        }
+        .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; }
 
         .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text-dim);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            transition: all 0.15s;
+            position: absolute; top: 16px; right: 16px;
+            width: 28px; height: 28px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--surface-2);
+            color: var(--text-dim); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; transition: all 0.15s;
         }
-
-        .modal-close:hover {
-            background: var(--border);
-            color: var(--text);
-        }
+        .modal-close:hover { background: var(--border); color: var(--text); }
 
         .controls-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 6px 14px;
-            font-size: 12px;
-            align-items: center;
+            display: grid; grid-template-columns: auto 1fr;
+            gap: 6px 14px; font-size: 12px; align-items: center;
         }
-
-        .controls-grid .keys {
-            display: flex;
-            gap: 3px;
-            justify-self: end;
-        }
-
-        .controls-grid .action {
-            color: var(--text-dim);
-            font-weight: 400;
-        }
+        .controls-grid .keys { display: flex; gap: 3px; justify-self: end; }
+        .controls-grid .action { color: var(--text-dim); font-weight: 400; }
 
         kbd {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--text-muted);
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 3px 6px;
-            line-height: 1;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+            color: var(--text-muted); background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 4px;
+            padding: 3px 6px; line-height: 1;
         }
 
         /* ─── FOOTER ─── */
-        footer {
-            border-top: 1px solid var(--border-subtle);
-            padding: 0 24px;
-        }
+        footer { border-top: 1px solid var(--border-subtle); padding: 0 24px; }
 
         .footer-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 32px 0;
         }
 
         .footer-logo {
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            text-transform: uppercase;
-            font-size: 13px;
-            letter-spacing: -0.02em;
-            color: var(--text-dim);
+            font-weight: 900; font-style: italic; text-transform: uppercase;
+            font-size: 13px; letter-spacing: -0.02em; color: var(--text-dim);
         }
 
-        .footer-tagline {
-            font-size: 12px;
-            color: var(--text-dim);
-        }
+        .footer-tagline { font-size: 12px; color: var(--text-dim); }
 
         /* ─── ANIMATIONS ─── */
         @keyframes fade-up {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(24px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        .reveal {
+            opacity: 0; transform: translateY(32px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.in-view { opacity: 1; transform: translateY(0); }
 
         .fade-up {
             animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             opacity: 0;
         }
-
-        .fade-up.d1 { animation-delay: 0.05s; }
-        .fade-up.d2 { animation-delay: 0.12s; }
-        .fade-up.d3 { animation-delay: 0.2s; }
-        .fade-up.d4 { animation-delay: 0.3s; }
+        .fade-up.d1 { animation-delay: 0.08s; }
+        .fade-up.d2 { animation-delay: 0.16s; }
+        .fade-up.d3 { animation-delay: 0.24s; }
+        .fade-up.d4 { animation-delay: 0.32s; }
 
         @keyframes block-in {
             from { opacity: 0; transform: translateY(-6px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        .block-in {
-            animation: block-in 0.25s ease forwards;
-        }
+        .block-in { animation: block-in 0.25s ease forwards; }
 
         /* ─── RESPONSIVE ─── */
         @media (max-width: 860px) {
             .game-layout { grid-template-columns: 1fr; }
-            .side-panel {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-            .specs-bar { flex-wrap: wrap; gap: 16px; }
-            nav { padding: 0 16px; }
+            .side-panel { display: grid; grid-template-columns: 1fr 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+            .hero { padding: 80px 24px 64px; }
+            .cta-actions { flex-direction: column; gap: 16px; }
         }
     </style>
 </head>
 <body>
 
+    <!-- ═══ NAV ═══ -->
     <nav>
         <div class="nav-inner">
             <a class="logo" href="https://chainreactor.io">Chainreactor</a>
@@ -595,6 +551,7 @@
         </div>
     </nav>
 
+    <!-- ═══ HERO ═══ -->
     <div class="hero fade-up">
         <div class="hero-badge">
             <span class="pulse"></span>
@@ -602,97 +559,196 @@
         </div>
         <h1>Can your blockchain <strong>run DOOM?</strong></h1>
         <p>The entire game — engine, physics, AI, rendering — runs inside a Substrate runtime. Every tick executes on-chain. Every frame is rendered by validators and served to players via RPC. No client-side logic. Pure on-chain gaming.</p>
+        <div class="specs-bar fade-up d2">
+            <div class="spec-item"><code>320×200</code> framebuffer</div>
+            <div class="spec-item"><span class="dot"></span></div>
+            <div class="spec-item"><code>i32×1000</code> fixed-point</div>
+            <div class="spec-item"><span class="dot"></span></div>
+            <div class="spec-item"><code>no_std</code> compatible</div>
+            <div class="spec-item"><span class="dot"></span></div>
+            <div class="spec-item"><code>DDA</code> raycasting</div>
+        </div>
     </div>
 
-    <div class="specs-bar fade-up d2">
-        <div class="spec-item"><code>320×200</code> framebuffer</div>
-        <div class="spec-item"><span class="dot"></span></div>
-        <div class="spec-item"><code>i32×1000</code> fixed-point</div>
-        <div class="spec-item"><span class="dot"></span></div>
-        <div class="spec-item"><code>no_std</code> compatible</div>
-        <div class="spec-item"><span class="dot"></span></div>
-        <div class="spec-item"><code>DDA</code> raycasting</div>
-    </div>
-
-    <div class="game-section">
-        <div class="game-layout fade-up d3">
-            <div class="viewport-wrapper">
-                <canvas id="game-canvas" width="320" height="200"></canvas>
-                <div class="viewport-hud">
-                    <div class="hud-pill" id="fps">-- fps</div>
-                </div>
-                <div class="viewport-controls-hint">
-                    <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
-                </div>
-                <div class="status-msg" id="status-msg"></div>
-            </div>
-
-            <div class="side-panel">
-                <!-- Chain Status -->
-                <div class="card">
-                    <div class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        Network
+    <!-- ═══ DEMO SECTION ═══ -->
+    <div class="section-divider"></div>
+    <div class="demo-section">
+        <div class="section-inner">
+            <div class="demo-label fade-up d3"><span>Live Demo</span></div>
+            <div class="game-layout fade-up d4">
+                <div class="viewport-wrapper">
+                    <canvas id="game-canvas" width="320" height="200"></canvas>
+                    <div class="viewport-hud">
+                        <div class="hud-pill" id="fps">-- fps</div>
                     </div>
-                    <div class="stat-row">
-                        <span class="stat-label"><span class="chain-dot live" id="chain-dot"></span> Status</span>
-                        <span class="stat-value" id="chain-status">Producing</span>
+                    <div class="viewport-controls-hint">
+                        <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
                     </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Runtime</span>
-                        <span class="stat-value">doom-v1</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Finality</span>
-                        <span class="stat-value" id="finality">Instant</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Block time</span>
-                        <span class="stat-value">67ms</span>
-                    </div>
+                    <div class="status-msg" id="status-msg"></div>
                 </div>
 
-                <!-- Latest Blocks -->
-                <div class="card">
-                    <div class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                        Latest Blocks
+                <div class="side-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            Network
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label"><span class="chain-dot live" id="chain-dot"></span> Status</span>
+                            <span class="stat-value" id="chain-status">Producing</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Runtime</span>
+                            <span class="stat-value">doom-v1</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Finality</span>
+                            <span class="stat-value">Instant</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Block time</span>
+                            <span class="stat-value">67ms</span>
+                        </div>
                     </div>
-                    <div class="block-feed" id="block-feed">
-                        <!-- populated by JS -->
-                    </div>
-                </div>
 
-                <!-- Extrinsics / Game State -->
-                <div class="card">
-                    <div class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        State
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            Latest Blocks
+                        </div>
+                        <div class="block-feed" id="block-feed"></div>
                     </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Block #</span>
-                        <span class="stat-value" id="block-num" style="color: var(--accent);">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Extrinsics</span>
-                        <span class="stat-value" id="ext-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Events</span>
-                        <span class="stat-value" id="event-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Storage writes</span>
-                        <span class="stat-value" id="storage-writes">0</span>
-                    </div>
-                </div>
 
-                <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            State
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Block #</span>
+                            <span class="stat-value" id="block-num" style="color: var(--accent);">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Extrinsics</span>
+                            <span class="stat-value" id="ext-count">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Events</span>
+                            <span class="stat-value" id="event-count">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Storage writes</span>
+                            <span class="stat-value" id="storage-writes">0</span>
+                        </div>
+                    </div>
+
+                    <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Controls Modal -->
+    <!-- ═══ FEATURES SECTION ═══ -->
+    <div class="section-divider"></div>
+    <div class="section">
+        <div class="section-inner">
+            <div class="section-header reveal">
+                <h2>How it works</h2>
+                <p>Substrate's runtime architecture makes it possible to run complex real-time applications entirely on-chain.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div>
+                        <p class="feature-label">Execution</p>
+                        <h3 class="feature-title">Deterministic runtime</h3>
+                    </div>
+                    <p class="feature-desc">All game logic uses integer-only fixed-point math, guaranteeing identical output across every validator. No floating point, no divergence, no consensus failures.</p>
+                    <div class="feature-visual">
+                        <div class="det-grid">
+                            <div class="det-dot" style="animation-delay:0s"></div>
+                            <div class="det-dot" style="animation-delay:0.25s"></div>
+                            <div class="det-dot" style="animation-delay:0.5s"></div>
+                            <div class="det-dot" style="animation-delay:0.75s"></div>
+                            <div class="det-dot" style="animation-delay:1s"></div>
+                            <div class="det-dot" style="animation-delay:1.25s"></div>
+                            <div class="det-dot" style="animation-delay:1.5s"></div>
+                            <div class="det-dot" style="animation-delay:1.75s"></div>
+                            <div class="det-dot" style="animation-delay:0.1s"></div>
+                            <div class="det-dot" style="animation-delay:0.35s"></div>
+                            <div class="det-dot" style="animation-delay:0.6s"></div>
+                            <div class="det-dot" style="animation-delay:0.85s"></div>
+                            <div class="det-dot" style="animation-delay:1.1s"></div>
+                            <div class="det-dot" style="animation-delay:1.35s"></div>
+                            <div class="det-dot" style="animation-delay:1.6s"></div>
+                            <div class="det-dot" style="animation-delay:1.85s"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal" style="transition-delay: 0.08s">
+                    <div>
+                        <p class="feature-label">Infrastructure</p>
+                        <h3 class="feature-title">Block-per-tick pipeline</h3>
+                    </div>
+                    <p class="feature-desc">Each game tick maps to a Substrate block. Player inputs are submitted as extrinsics, state transitions execute in the runtime, and the framebuffer is stored on-chain and served via RPC.</p>
+                    <div class="feature-visual">
+                        <div class="block-strip">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal" style="transition-delay: 0.16s">
+                    <div>
+                        <p class="feature-label">Substrate</p>
+                        <h3 class="feature-title">Custom pallet architecture</h3>
+                    </div>
+                    <p class="feature-desc">Substrate's modular pallet system means the DOOM engine is just another runtime module — composable with staking, governance, and token pallets on the same chain.</p>
+                    <div class="feature-visual">
+                        <div class="chain-links">
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ CTA SECTION ═══ -->
+    <div class="section">
+        <div class="section-inner">
+            <div class="cta-box reveal">
+                <h2>Ready to build?</h2>
+                <p>If Substrate can run DOOM, imagine what it can do for your project. Launch a production-grade appchain in minutes.</p>
+                <div class="cta-actions">
+                    <a href="https://chainreactor.io/signup" class="cta-link">
+                        Launch your chain
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </a>
+                    <a href="https://chainreactor.io/signup" class="cta-btn">Get started</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ CONTROLS MODAL ═══ -->
     <div class="modal-overlay" id="controls-modal" onclick="if(event.target===this)this.classList.remove('open')">
         <div class="modal">
             <div class="modal-title">Controls</div>
@@ -718,6 +774,7 @@
         </div>
     </div>
 
+    <!-- ═══ FOOTER ═══ -->
     <footer>
         <div class="footer-inner">
             <span class="footer-logo">Chainreactor</span>
@@ -728,22 +785,20 @@
     <script type="module">
         import init, { DoomGame } from '../../pkg/doom_wasm.js';
 
-        let game;
-        let wasmMemory;
-        let canvas, ctx, imageData;
-        let keys = {};
-        let frameCount = 0;
-        let fpsDisplay = 0;
-        let fpsTimer = 0;
-        const TICK_RATE = 15;
-        let tickAccumulator = 0;
-        let lastTickTime = 0;
-        let lastBlockNum = 0;
-        let totalExtrinsics = 0;
-        let totalEvents = 0;
-        let totalStorageWrites = 0;
+        // ── Scroll Reveal ──
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        // Simple deterministic hash from block number
+        let game, wasmMemory, canvas, ctx, imageData;
+        let keys = {};
+        let frameCount = 0, fpsDisplay = 0, fpsTimer = 0;
+        const TICK_RATE = 15;
+        let tickAccumulator = 0, lastTickTime = 0;
+        let lastBlockNum = 0;
+        let totalExtrinsics = 0, totalEvents = 0, totalStorageWrites = 0;
+
         function blockHash(n) {
             let h = (n * 2654435761) >>> 0;
             return '0x' + h.toString(16).padStart(8, '0') + '...' +
@@ -757,7 +812,6 @@
             totalEvents += inputCount + Math.floor(Math.random() * 2);
             totalStorageWrites += inputCount * 2 + 1;
 
-            // Mark previous latest as normal
             const prev = feed.querySelector('.latest');
             if (prev) prev.classList.remove('latest');
 
@@ -768,13 +822,8 @@
                 <span class="block-hash">${blockHash(blockNum)}</span>
                 <span class="ext-pill">${inputCount} ext</span>
             `;
-
             feed.prepend(entry);
-
-            // Keep max 20 entries
-            while (feed.children.length > 20) {
-                feed.removeChild(feed.lastChild);
-            }
+            while (feed.children.length > 20) feed.removeChild(feed.lastChild);
         }
 
         async function start() {
@@ -789,40 +838,20 @@
 
             document.addEventListener('keydown', (e) => {
                 keys[e.code] = true;
-                if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) {
-                    e.preventDefault();
-                }
-
-                // Escape closes controls modal
-                if (e.code === 'Escape') {
-                    document.getElementById('controls-modal').classList.remove('open');
-                }
-
-                if (game.is_title_screen()) {
-                    game.start_game();
-                    return;
-                }
-
-                if (game.game_over() || game.level_complete()) {
-                    window.restartGame();
-                    return;
-                }
+                if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
+                if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
+                if (game.is_title_screen()) { game.start_game(); return; }
+                if (game.game_over() || game.level_complete()) { window.restartGame(); return; }
             });
-            document.addEventListener('keyup', (e) => {
-                keys[e.code] = false;
-            });
+            document.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
             window.restartGame = () => {
                 game.reset();
                 document.getElementById('status-msg').textContent = '';
                 document.getElementById('status-msg').className = 'status-msg';
                 document.getElementById('restart-btn').style.display = 'none';
-                // Reset block feed
                 document.getElementById('block-feed').innerHTML = '';
-                lastBlockNum = 0;
-                totalExtrinsics = 0;
-                totalEvents = 0;
-                totalStorageWrites = 0;
+                lastBlockNum = 0; totalExtrinsics = 0; totalEvents = 0; totalStorageWrites = 0;
             };
 
             lastTickTime = performance.now();
@@ -846,20 +875,15 @@
             if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
             if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
             if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }
-            if (keys['KeyR']) {
-                window.restartGame();
-            }
+            if (keys['KeyR']) window.restartGame();
             return new Uint8Array(inputs);
         }
 
         function gameLoop(timestamp) {
             requestAnimationFrame(gameLoop);
-
             frameCount++;
             if (timestamp - fpsTimer > 1000) {
-                fpsDisplay = frameCount;
-                frameCount = 0;
-                fpsTimer = timestamp;
+                fpsDisplay = frameCount; frameCount = 0; fpsTimer = timestamp;
                 document.getElementById('fps').textContent = fpsDisplay + ' fps';
             }
 
@@ -871,15 +895,11 @@
 
             try {
                 while (tickAccumulator >= tickInterval) {
-                    const inputs = collectInputs();
-                    game.tick(inputs);
+                    game.tick(collectInputs());
                     tickAccumulator -= tickInterval;
                 }
-
                 game.render();
-                const ptr = game.rgba_ptr();
-                const len = game.rgba_len();
-                const rgba = new Uint8ClampedArray(wasmMemory.buffer, ptr, len);
+                const rgba = new Uint8ClampedArray(wasmMemory.buffer, game.rgba_ptr(), game.rgba_len());
                 imageData.data.set(rgba);
                 ctx.putImageData(imageData, 0, 0);
             } catch (e) {
@@ -888,24 +908,15 @@
                 tickAccumulator = 0;
             }
 
-            updateHUD();
-        }
-
-        function updateHUD() {
             const tick = game.current_tick();
-
-            // Update block number and feed
             if (tick !== lastBlockNum && tick > 0) {
                 document.getElementById('block-num').textContent = tick;
                 addBlockToFeed(tick);
                 lastBlockNum = tick;
-
-                // Update cumulative stats
                 document.getElementById('ext-count').textContent = totalExtrinsics;
                 document.getElementById('event-count').textContent = totalEvents;
                 document.getElementById('storage-writes').textContent = totalStorageWrites;
             }
-
             if (game.game_over() || game.level_complete()) {
                 document.getElementById('restart-btn').style.display = 'block';
             }
