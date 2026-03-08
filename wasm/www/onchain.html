@@ -770,6 +770,9 @@
         let stallTimer = null;
         const STALL_THRESHOLD_MS = 5000; // 10x the 500ms block time
         const MAX_PLAYERS = 32;
+        let idleTimer = null;
+        const IDLE_TIMEOUT_MS = 120000; // 2 minutes with no input → auto-reset
+        let lastInputTime = 0;
 
         // ═══ DOM ═══
         const canvas = document.getElementById('game-canvas');
@@ -788,6 +791,7 @@
             if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
             if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
             keys[e.code] = true;
+            resetIdleTimer();
         });
         document.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
@@ -906,6 +910,38 @@
             } catch (e) {
                 // Ignore — will retry next block
             }
+        }
+
+        // ═══ IDLE TIMEOUT ═══
+        function resetIdleTimer() {
+            lastInputTime = Date.now();
+            hideWarning();
+            if (idleTimer) clearTimeout(idleTimer);
+            if (!gameActive) return;
+
+            // Warn at 90s
+            idleTimer = setTimeout(() => {
+                showWarning('No input for 90s — game will reset in 30s', 'stall');
+                // Reset at 120s
+                idleTimer = setTimeout(async () => {
+                    if (!gameActive || !api || !account) return;
+                    try {
+                        showWarning('Idle timeout — resetting game to free slot', 'error');
+                        await api.tx.doom.resetGame().signAndSend(account, { nonce: -1 });
+                        totalExtSent++;
+                        document.getElementById('ext-count').textContent = totalExtSent;
+                        gameActive = false;
+                        // Show reconnect overlay
+                        document.getElementById('connect-overlay').classList.remove('hidden');
+                        document.getElementById('connect-status').textContent = 'Game reset (idle timeout) — click to play again';
+                        document.getElementById('connect-btn').disabled = false;
+                        document.getElementById('connect-btn').textContent = 'Start Game';
+                        hideWarning();
+                    } catch (e) {
+                        console.warn('Idle reset failed:', e.message);
+                    }
+                }, 30000);
+            }, IDLE_TIMEOUT_MS - 30000);
         }
 
         // ═══ FRAME RENDERING ═══
@@ -1114,6 +1150,7 @@
                 // Step 7: Subscribe to blocks and start rendering
                 subscribeBlocks();
                 resetStallTimer();
+                resetIdleTimer();
 
                 // Step 8: Input loop — submit inputs at fixed rate
                 setInterval(submitInputs, 100); // 10 inputs/sec max

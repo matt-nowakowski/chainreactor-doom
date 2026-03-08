@@ -31,7 +31,9 @@ ExecStart=${BINARY_PATH} \\
   --rpc-external \\
   --rpc-cors all \\
   --rpc-methods unsafe \\
-  --name "doom-demo-validator"
+  --name "doom-demo-validator" \\
+  --ethereum-node-url wss://ethereum-rpc.publicnode.com \\
+  --tnf-port 2020
 Restart=always
 RestartSec=5
 
