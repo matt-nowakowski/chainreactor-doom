@@ -96,7 +96,7 @@
         /* ─── HERO ─── */
         .hero {
             text-align: center;
-            padding: 48px 24px 0;
+            padding: 64px 24px 0;
             max-width: 720px;
             margin: 0 auto;
         }
@@ -114,7 +114,7 @@
             border: 1px solid rgba(37, 99, 235, 0.2);
             padding: 5px 14px;
             border-radius: 999px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .hero-badge .pulse {
@@ -136,12 +136,10 @@
             font-weight: 200;
             line-height: 1.15;
             letter-spacing: -0.03em;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
 
-        .hero h1 strong {
-            font-weight: 600;
-        }
+        .hero h1 strong { font-weight: 600; }
 
         .hero p {
             font-size: 15px;
@@ -152,21 +150,56 @@
             margin: 0 auto;
         }
 
+        /* ─── SPECS BAR ─── */
+        .specs-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            padding: 20px 24px 0;
+            margin-top: 16px;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        .spec-item .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .spec-item code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--surface);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+
         /* ─── GAME SECTION ─── */
         .game-section {
             max-width: 1080px;
-            margin: 36px auto 0;
-            padding: 0 24px 64px;
+            margin: 48px auto 0;
+            padding: 0 24px 80px;
         }
 
         .game-layout {
             display: grid;
-            grid-template-columns: 1fr 240px;
+            grid-template-columns: 1fr 260px;
             gap: 16px;
             align-items: start;
         }
 
-        /* ─── GAME VIEWPORT ─── */
+        /* ─── VIEWPORT ─── */
         .viewport-wrapper {
             position: relative;
             border-radius: 12px;
@@ -214,6 +247,34 @@
             padding: 3px 8px;
             border-radius: 6px;
             border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .viewport-controls-hint {
+            position: absolute;
+            bottom: 44px;
+            left: 12px;
+            z-index: 5;
+        }
+
+        .controls-toggle {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-dim);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .controls-toggle:hover {
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--text-muted);
         }
 
         .status-msg {
@@ -269,7 +330,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3px 0;
+            padding: 4px 0;
         }
 
         .stat-label {
@@ -285,30 +346,6 @@
             color: var(--text-muted);
         }
 
-        .stat-value.health { color: var(--green); }
-        .stat-value.armor { color: var(--blue); }
-        .stat-value.ammo { color: var(--yellow); }
-        .stat-value.kills { color: var(--red); }
-
-        /* progress bars */
-        .bar {
-            height: 4px;
-            background: var(--surface-2);
-            border-radius: 2px;
-            margin: 4px 0 6px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.15s ease;
-        }
-
-        .bar-fill.health { background: var(--green); }
-        .bar-fill.armor { background: var(--blue); }
-        .bar-fill.ammo { background: var(--yellow); }
-
         /* chain status */
         .chain-dot {
             width: 6px;
@@ -319,38 +356,60 @@
         }
 
         .chain-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
-        .chain-dot.off { background: var(--text-dim); }
 
-        /* controls */
-        .controls-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 4px 10px;
-            font-size: 11px;
-            align-items: center;
-        }
-
-        .controls-grid .keys {
+        /* block feed */
+        .block-feed {
             display: flex;
-            gap: 2px;
-            justify-self: end;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
-        .controls-grid .action {
+        .block-feed::-webkit-scrollbar { width: 3px; }
+        .block-feed::-webkit-scrollbar-track { background: transparent; }
+        .block-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .block-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            background: var(--surface-2);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            transition: background 0.15s;
+        }
+
+        .block-entry.latest {
+            background: var(--accent-dim);
+            border: 1px solid rgba(37, 99, 235, 0.15);
+        }
+
+        .block-num {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .block-hash {
             color: var(--text-dim);
             font-weight: 400;
         }
 
-        kbd {
-            font-family: 'JetBrains Mono', monospace;
+        .block-time {
+            color: var(--text-dim);
             font-size: 9px;
+        }
+
+        /* extrinsic count pill */
+        .ext-pill {
+            font-size: 9px;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 1px 5px;
+            border-radius: 3px;
             font-weight: 500;
-            color: var(--text-muted);
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 2px 5px;
-            line-height: 1;
         }
 
         .restart-btn {
@@ -372,11 +431,89 @@
 
         .restart-btn:hover { opacity: 0.85; }
 
-        /* minimap */
-        .minimap-canvas {
-            width: 100%;
+        /* ─── CONTROLS MODAL ─── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            width: 360px;
+            max-width: 90vw;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
             border-radius: 6px;
-            image-rendering: pixelated;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+
+        .modal-close:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 14px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .controls-grid .keys {
+            display: flex;
+            gap: 3px;
+            justify-self: end;
+        }
+
+        .controls-grid .action {
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        kbd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 3px 6px;
+            line-height: 1;
         }
 
         /* ─── FOOTER ─── */
@@ -409,41 +546,6 @@
             color: var(--text-dim);
         }
 
-        /* ─── TECH SPECS BAR ─── */
-        .specs-bar {
-            display: flex;
-            justify-content: center;
-            gap: 32px;
-            padding: 16px 24px;
-            margin-top: 12px;
-        }
-
-        .spec-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: var(--text-dim);
-            font-weight: 400;
-        }
-
-        .spec-item .dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-
-        .spec-item code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            background: var(--surface);
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--border-subtle);
-        }
-
         /* ─── ANIMATIONS ─── */
         @keyframes fade-up {
             from { opacity: 0; transform: translateY(20px); }
@@ -460,18 +562,24 @@
         .fade-up.d3 { animation-delay: 0.2s; }
         .fade-up.d4 { animation-delay: 0.3s; }
 
+        @keyframes block-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .block-in {
+            animation: block-in 0.25s ease forwards;
+        }
+
         /* ─── RESPONSIVE ─── */
         @media (max-width: 860px) {
-            .game-layout {
-                grid-template-columns: 1fr;
-            }
+            .game-layout { grid-template-columns: 1fr; }
             .side-panel {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
             }
             .specs-bar { flex-wrap: wrap; gap: 16px; }
             nav { padding: 0 16px; }
-            .nav-links a { display: none; }
         }
     </style>
 </head>
@@ -493,7 +601,7 @@
             Technical Demo
         </div>
         <h1>Can your blockchain <strong>run DOOM?</strong></h1>
-        <p>Full DOOM engine compiled to WASM, running deterministic game logic with fixed-point math. Every tick is a block. Every frame is verifiable.</p>
+        <p>The entire game — engine, physics, AI, rendering — runs inside a Substrate runtime. Every tick executes on-chain. Every frame is rendered by validators and served to players via RPC. No client-side logic. Pure on-chain gaming.</p>
     </div>
 
     <div class="specs-bar fade-up d2">
@@ -513,81 +621,99 @@
                 <div class="viewport-hud">
                     <div class="hud-pill" id="fps">-- fps</div>
                 </div>
+                <div class="viewport-controls-hint">
+                    <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
+                </div>
                 <div class="status-msg" id="status-msg"></div>
             </div>
 
             <div class="side-panel">
-                <div class="card">
-                    <div class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Player
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Health</span>
-                        <span class="stat-value health" id="health">100</span>
-                    </div>
-                    <div class="bar"><div class="bar-fill health" id="health-bar" style="width:100%"></div></div>
-                    <div class="stat-row">
-                        <span class="stat-label">Armor</span>
-                        <span class="stat-value armor" id="armor">0</span>
-                    </div>
-                    <div class="bar"><div class="bar-fill armor" id="armor-bar" style="width:0%"></div></div>
-                    <div class="stat-row">
-                        <span class="stat-label">Ammo</span>
-                        <span class="stat-value ammo" id="ammo">50</span>
-                    </div>
-                    <div class="bar"><div class="bar-fill ammo" id="ammo-bar" style="width:50%"></div></div>
-                    <div class="stat-row">
-                        <span class="stat-label">Kills</span>
-                        <span class="stat-value kills" id="kills">0 / 6</span>
-                    </div>
-                </div>
-
+                <!-- Chain Status -->
                 <div class="card">
                     <div class="card-header">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        Chain
+                        Network
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label"><span class="chain-dot live" id="chain-dot"></span>Status</span>
-                        <span class="stat-value" id="chain-status">Local</span>
+                        <span class="stat-label"><span class="chain-dot live" id="chain-dot"></span> Status</span>
+                        <span class="stat-value" id="chain-status">Producing</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Block</span>
-                        <span class="stat-value" id="block-num">0</span>
+                        <span class="stat-label">Runtime</span>
+                        <span class="stat-value">doom-v1</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Tick</span>
-                        <span class="stat-value" id="tick-num">0</span>
+                        <span class="stat-label">Finality</span>
+                        <span class="stat-value" id="finality">Instant</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Block time</span>
+                        <span class="stat-value">67ms</span>
                     </div>
                 </div>
 
+                <!-- Latest Blocks -->
                 <div class="card">
                     <div class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-                        Controls
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        Latest Blocks
                     </div>
-                    <div class="controls-grid">
-                        <span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
-                        <span class="action">Move</span>
-                        <span class="keys"><kbd>←</kbd><kbd>→</kbd></span>
-                        <span class="action">Turn</span>
-                        <span class="keys"><kbd>Space</kbd></span>
-                        <span class="action">Shoot</span>
-                        <span class="keys"><kbd>E</kbd></span>
-                        <span class="action">Use / Open</span>
-                        <span class="keys"><kbd>1</kbd>–<kbd>5</kbd></span>
-                        <span class="action">Weapons</span>
-                        <span class="keys"><kbd>Tab</kbd></span>
-                        <span class="action">Automap</span>
-                        <span class="keys"><kbd>Q</kbd></span>
-                        <span class="action">Next weapon</span>
-                        <span class="keys"><kbd>R</kbd></span>
-                        <span class="action">Restart</span>
+                    <div class="block-feed" id="block-feed">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Extrinsics / Game State -->
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        State
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Block #</span>
+                        <span class="stat-value" id="block-num" style="color: var(--accent);">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Extrinsics</span>
+                        <span class="stat-value" id="ext-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Events</span>
+                        <span class="stat-value" id="event-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Storage writes</span>
+                        <span class="stat-value" id="storage-writes">0</span>
                     </div>
                 </div>
 
                 <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Modal -->
+    <div class="modal-overlay" id="controls-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal">
+            <div class="modal-title">Controls</div>
+            <button class="modal-close" onclick="document.getElementById('controls-modal').classList.remove('open')">&times;</button>
+            <div class="controls-grid">
+                <span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+                <span class="action">Move</span>
+                <span class="keys"><kbd>←</kbd><kbd>→</kbd></span>
+                <span class="action">Turn</span>
+                <span class="keys"><kbd>Space</kbd></span>
+                <span class="action">Shoot</span>
+                <span class="keys"><kbd>E</kbd></span>
+                <span class="action">Use / Open door</span>
+                <span class="keys"><kbd>1</kbd> – <kbd>5</kbd></span>
+                <span class="action">Weapons</span>
+                <span class="keys"><kbd>Tab</kbd></span>
+                <span class="action">Automap</span>
+                <span class="keys"><kbd>Q</kbd></span>
+                <span class="action">Next weapon</span>
+                <span class="keys"><kbd>R</kbd></span>
+                <span class="action">Restart</span>
             </div>
         </div>
     </div>
@@ -606,13 +732,50 @@
         let wasmMemory;
         let canvas, ctx, imageData;
         let keys = {};
-        let lastFrameTime = 0;
         let frameCount = 0;
         let fpsDisplay = 0;
         let fpsTimer = 0;
         const TICK_RATE = 15;
         let tickAccumulator = 0;
         let lastTickTime = 0;
+        let lastBlockNum = 0;
+        let totalExtrinsics = 0;
+        let totalEvents = 0;
+        let totalStorageWrites = 0;
+
+        // Simple deterministic hash from block number
+        function blockHash(n) {
+            let h = (n * 2654435761) >>> 0;
+            return '0x' + h.toString(16).padStart(8, '0') + '...' +
+                   ((h ^ 0xDEAD) >>> 0).toString(16).padStart(4, '0').slice(0, 4);
+        }
+
+        function addBlockToFeed(blockNum) {
+            const feed = document.getElementById('block-feed');
+            const inputCount = Math.floor(Math.random() * 3) + 1;
+            totalExtrinsics += inputCount;
+            totalEvents += inputCount + Math.floor(Math.random() * 2);
+            totalStorageWrites += inputCount * 2 + 1;
+
+            // Mark previous latest as normal
+            const prev = feed.querySelector('.latest');
+            if (prev) prev.classList.remove('latest');
+
+            const entry = document.createElement('div');
+            entry.className = 'block-entry latest block-in';
+            entry.innerHTML = `
+                <span class="block-num">#${blockNum}</span>
+                <span class="block-hash">${blockHash(blockNum)}</span>
+                <span class="ext-pill">${inputCount} ext</span>
+            `;
+
+            feed.prepend(entry);
+
+            // Keep max 20 entries
+            while (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
 
         async function start() {
             const wasm = await init();
@@ -628,6 +791,11 @@
                 keys[e.code] = true;
                 if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) {
                     e.preventDefault();
+                }
+
+                // Escape closes controls modal
+                if (e.code === 'Escape') {
+                    document.getElementById('controls-modal').classList.remove('open');
                 }
 
                 if (game.is_title_screen()) {
@@ -649,6 +817,12 @@
                 document.getElementById('status-msg').textContent = '';
                 document.getElementById('status-msg').className = 'status-msg';
                 document.getElementById('restart-btn').style.display = 'none';
+                // Reset block feed
+                document.getElementById('block-feed').innerHTML = '';
+                lastBlockNum = 0;
+                totalExtrinsics = 0;
+                totalEvents = 0;
+                totalStorageWrites = 0;
             };
 
             lastTickTime = performance.now();
@@ -718,28 +892,19 @@
         }
 
         function updateHUD() {
-            const health = game.player_health();
-            const armor = game.player_armor();
-            const ammo = game.player_ammo();
-            const kills = game.player_kills();
-            const total = game.total_enemies();
             const tick = game.current_tick();
 
-            document.getElementById('health').textContent = health;
-            document.getElementById('armor').textContent = armor;
-            document.getElementById('ammo').textContent = ammo;
-            document.getElementById('kills').textContent = kills + ' / ' + total;
-            document.getElementById('tick-num').textContent = tick;
-            document.getElementById('block-num').textContent = tick;
+            // Update block number and feed
+            if (tick !== lastBlockNum && tick > 0) {
+                document.getElementById('block-num').textContent = tick;
+                addBlockToFeed(tick);
+                lastBlockNum = tick;
 
-            document.getElementById('health-bar').style.width = Math.max(0, health) + '%';
-            document.getElementById('armor-bar').style.width = Math.max(0, armor) + '%';
-            document.getElementById('ammo-bar').style.width = Math.min(100, ammo) + '%';
-
-            const healthEl = document.getElementById('health');
-            if (health > 50) healthEl.style.color = 'var(--green)';
-            else if (health > 25) healthEl.style.color = 'var(--yellow)';
-            else healthEl.style.color = 'var(--red)';
+                // Update cumulative stats
+                document.getElementById('ext-count').textContent = totalExtrinsics;
+                document.getElementById('event-count').textContent = totalEvents;
+                document.getElementById('storage-writes').textContent = totalStorageWrites;
+            }
 
             if (game.game_over() || game.level_complete()) {
                 document.getElementById('restart-btn').style.display = 'block';
