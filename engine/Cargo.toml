@@ -1,0 +1,12 @@
+[package]
+name = "doom-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Pure Rust DOOM-style game engine for on-chain execution"
+
+[dependencies]
+serde = { version = "1", features = ["derive"], default-features = false }
+
+[features]
+default = ["std"]
+std = ["serde/std"]

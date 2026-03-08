@@ -1,0 +1,4 @@
+[workspace]
+members = ["engine", "wasm"]
+exclude = ["tools/wad-extract"]
+resolver = "2"

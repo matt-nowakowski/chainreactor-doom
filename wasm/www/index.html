@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chain Reactor — Can it run DOOM?</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+            letter-spacing: 2px;
+        }
+        .header .subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .game-container {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            margin-top: 10px;
+        }
+        #game-canvas {
+            border: 2px solid #333;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            cursor: crosshair;
+            width: 640px;
+            height: 400px;
+        }
+        .side-panel {
+            width: 220px;
+            font-size: 13px;
+        }
+        .panel-section {
+            background: #111;
+            border: 1px solid #222;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .panel-section h3 {
+            color: #ff4444;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 4px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .stat-label { color: #888; }
+        .stat-value { color: #ccc; }
+        .stat-value.health { color: #44ff44; }
+        .stat-value.armor { color: #4488ff; }
+        .stat-value.ammo { color: #ffff44; }
+        .stat-value.kills { color: #ff4444; }
+        .bar {
+            height: 8px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            margin-bottom: 6px;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 0.1s;
+        }
+        .bar-fill.health { background: #44ff44; }
+        .bar-fill.armor { background: #4488ff; }
+        .bar-fill.ammo { background: #ffff44; }
+        .controls {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .controls kbd {
+            background: #222;
+            border: 1px solid #444;
+            padding: 1px 5px;
+            font-size: 10px;
+            color: #ccc;
+        }
+        .chain-info {
+            font-size: 11px;
+        }
+        .chain-info .dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .dot.live { background: #44ff44; }
+        .dot.off { background: #444; }
+        .status-msg {
+            text-align: center;
+            padding: 8px;
+            font-size: 18px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 10;
+        }
+        .game-over { color: #ff0000; }
+        .level-complete { color: #00ff00; }
+        .overlay {
+            position: relative;
+            display: inline-block;
+        }
+        .fps-counter {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 10px;
+            color: #888;
+            z-index: 5;
+        }
+        .minimap-canvas {
+            border: 1px solid #333;
+        }
+        .event-log {
+            font-size: 10px;
+            max-height: 80px;
+            overflow-y: auto;
+            color: #888;
+        }
+        .event-log .event { margin-bottom: 2px; }
+        .event-log .kill { color: #ff4444; }
+        .event-log .pickup { color: #44ff44; }
+        .event-log .damage { color: #ff8800; }
+        footer {
+            margin-top: 16px;
+            padding: 12px;
+            font-size: 11px;
+            color: #444;
+            text-align: center;
+        }
+        footer a { color: #666; text-decoration: none; }
+        footer a:hover { color: #ff4444; }
+        .restart-btn {
+            background: #ff4444;
+            color: #000;
+            border: none;
+            padding: 6px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            display: none;
+        }
+        .restart-btn:hover { background: #ff6666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⛓ CAN IT RUN DOOM? ⛓</h1>
+        <div class="subtitle">Game logic running on-chain — every tick is a block</div>
+    </div>
+
+    <div class="game-container">
+        <div class="overlay">
+            <canvas id="game-canvas" width="320" height="200"></canvas>
+            <div class="fps-counter" id="fps">-- fps</div>
+            <div class="status-msg" id="status-msg"></div>
+        </div>
+
+        <div class="side-panel">
+            <div class="panel-section">
+                <h3>Player</h3>
+                <div class="stat-row">
+                    <span class="stat-label">Health</span>
+                    <span class="stat-value health" id="health">100</span>
+                </div>
+                <div class="bar"><div class="bar-fill health" id="health-bar" style="width:100%"></div></div>
+
+                <div class="stat-row">
+                    <span class="stat-label">Armor</span>
+                    <span class="stat-value armor" id="armor">0</span>
+                </div>
+                <div class="bar"><div class="bar-fill armor" id="armor-bar" style="width:0%"></div></div>
+
+                <div class="stat-row">
+                    <span class="stat-label">Ammo</span>
+                    <span class="stat-value ammo" id="ammo">50</span>
+                </div>
+                <div class="bar"><div class="bar-fill ammo" id="ammo-bar" style="width:50%"></div></div>
+
+                <div class="stat-row">
+                    <span class="stat-label">Kills</span>
+                    <span class="stat-value kills" id="kills">0 / 6</span>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Chain</h3>
+                <div class="chain-info">
+                    <div class="stat-row">
+                        <span class="stat-label"><span class="dot live" id="chain-dot"></span>Status</span>
+                        <span class="stat-value" id="chain-status">Local</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Block</span>
+                        <span class="stat-value" id="block-num">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Tick</span>
+                        <span class="stat-value" id="tick-num">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Minimap</h3>
+                <canvas id="minimap" class="minimap-canvas" width="192" height="192"></canvas>
+            </div>
+
+            <div class="panel-section">
+                <h3>Controls</h3>
+                <div class="controls">
+                    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move<br>
+                    <kbd>←</kbd><kbd>→</kbd> Turn<br>
+                    <kbd>Space</kbd> Shoot<br>
+                    <kbd>E</kbd> Use / Open door<br>
+                    <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Weapons<br>
+                    <kbd>Q</kbd> Next weapon<br>
+                    <kbd>R</kbd> Restart
+                </div>
+            </div>
+
+            <button class="restart-btn" id="restart-btn" onclick="restartGame()">Restart</button>
+        </div>
+    </div>
+
+    <footer>
+        Powered by <a href="#">Chain Reactor</a> — Substrate appchain infrastructure
+    </footer>
+
+    <script type="module">
+        import init, { DoomGame } from '../../pkg/doom_wasm.js';
+
+        let game;
+        let wasmMemory;
+        let canvas, ctx, imageData;
+        let minimapCanvas, minimapCtx;
+        let keys = {};
+        let lastFrameTime = 0;
+        let frameCount = 0;
+        let fpsDisplay = 0;
+        let fpsTimer = 0;
+        const TICK_RATE = 15; // ticks per second (game speed)
+        let tickAccumulator = 0;
+        let lastTickTime = 0;
+
+        async function start() {
+            const wasm = await init();
+            wasmMemory = wasm.memory;
+            game = new DoomGame();
+
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            imageData = ctx.createImageData(320, 200);
+
+            minimapCanvas = document.getElementById('minimap');
+            minimapCtx = minimapCanvas.getContext('2d');
+
+            // Key handlers
+            document.addEventListener('keydown', (e) => {
+                keys[e.code] = true;
+                if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+                    e.preventDefault();
+                }
+            });
+            document.addEventListener('keyup', (e) => {
+                keys[e.code] = false;
+            });
+
+            window.restartGame = () => {
+                game.reset();
+                document.getElementById('status-msg').textContent = '';
+                document.getElementById('status-msg').className = 'status-msg';
+                document.getElementById('restart-btn').style.display = 'none';
+            };
+
+            lastTickTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function collectInputs() {
+            const inputs = [];
+            if (keys['KeyW'] || keys['ArrowUp']) inputs.push(0);    // Forward
+            if (keys['KeyS'] || keys['ArrowDown']) inputs.push(1);  // Backward
+            if (keys['ArrowLeft']) inputs.push(2);                   // TurnLeft
+            if (keys['ArrowRight']) inputs.push(3);                  // TurnRight
+            if (keys['KeyA']) inputs.push(4);                        // StrafeLeft
+            if (keys['KeyD']) inputs.push(5);                        // StrafeRight
+            if (keys['Space']) inputs.push(6);                       // Shoot
+            if (keys['KeyE']) inputs.push(7);                        // Use
+            if (keys['KeyQ']) { inputs.push(8); keys['KeyQ'] = false; } // WeaponNext
+            if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; } // Fist
+            if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; } // Pistol
+            if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; } // Shotgun
+            if (keys['KeyR']) {
+                window.restartGame();
+            }
+            return new Uint8Array(inputs);
+        }
+
+        function gameLoop(timestamp) {
+            requestAnimationFrame(gameLoop);
+
+            // FPS counter
+            frameCount++;
+            if (timestamp - fpsTimer > 1000) {
+                fpsDisplay = frameCount;
+                frameCount = 0;
+                fpsTimer = timestamp;
+                document.getElementById('fps').textContent = fpsDisplay + ' fps';
+            }
+
+            // Fixed tick rate — cap catch-up to 4 ticks max (prevents spiral of death)
+            const dt = timestamp - lastTickTime;
+            lastTickTime = timestamp;
+            tickAccumulator += dt;
+            const tickInterval = 1000 / TICK_RATE;
+            tickAccumulator = Math.min(tickAccumulator, tickInterval * 4);
+
+            try {
+                while (tickAccumulator >= tickInterval) {
+                    const inputs = collectInputs();
+                    game.tick(inputs);
+                    tickAccumulator -= tickInterval;
+                }
+
+                // Render every frame — zero-copy from WASM memory
+                game.render();
+                const ptr = game.rgba_ptr();
+                const len = game.rgba_len();
+                const rgba = new Uint8ClampedArray(wasmMemory.buffer, ptr, len);
+                imageData.data.set(rgba);
+                ctx.putImageData(imageData, 0, 0);
+            } catch (e) {
+                console.error('Game error:', e);
+                // Reset game on unrecoverable error
+                game = new DoomGame();
+                tickAccumulator = 0;
+            }
+
+            // Update HUD
+            updateHUD();
+
+            // Update minimap
+            drawMinimap();
+        }
+
+        function updateHUD() {
+            const health = game.player_health();
+            const armor = game.player_armor();
+            const ammo = game.player_ammo();
+            const kills = game.player_kills();
+            const total = game.total_enemies();
+            const tick = game.current_tick();
+
+            document.getElementById('health').textContent = health;
+            document.getElementById('armor').textContent = armor;
+            document.getElementById('ammo').textContent = ammo;
+            document.getElementById('kills').textContent = kills + ' / ' + total;
+            document.getElementById('tick-num').textContent = tick;
+            document.getElementById('block-num').textContent = tick; // 1 tick = 1 block
+
+            document.getElementById('health-bar').style.width = Math.max(0, health) + '%';
+            document.getElementById('armor-bar').style.width = Math.max(0, armor) + '%';
+            document.getElementById('ammo-bar').style.width = Math.min(100, ammo) + '%';
+
+            // Health color
+            const healthEl = document.getElementById('health');
+            if (health > 50) healthEl.style.color = '#44ff44';
+            else if (health > 25) healthEl.style.color = '#ffff44';
+            else healthEl.style.color = '#ff4444';
+
+            // Show restart button on game over / level complete
+            // (The text overlay is rendered natively in the framebuffer)
+            if (game.game_over() || game.level_complete()) {
+                document.getElementById('restart-btn').style.display = 'block';
+            }
+        }
+
+        function drawMinimap() {
+            const mapW = 24;
+            const mapH = 24;
+            const cellSize = 8; // 192 / 24
+            minimapCtx.fillStyle = '#0a0a0a';
+            minimapCtx.fillRect(0, 0, 192, 192);
+
+            // We don't have direct tile access from WASM,
+            // so draw a static overlay based on the known E1M1 layout
+            // Player position
+            const px = game.player_x();
+            const py = game.player_y();
+            const pa = game.player_angle();
+
+            // Draw player
+            const playerScreenX = px * cellSize;
+            const playerScreenY = py * cellSize;
+
+            // Draw player dot
+            minimapCtx.fillStyle = '#44ff44';
+            minimapCtx.beginPath();
+            minimapCtx.arc(playerScreenX, playerScreenY, 3, 0, Math.PI * 2);
+            minimapCtx.fill();
+
+            // Draw player direction
+            minimapCtx.strokeStyle = '#44ff44';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(playerScreenX, playerScreenY);
+            minimapCtx.lineTo(
+                playerScreenX + Math.cos(pa) * 12,
+                playerScreenY + Math.sin(pa) * 12
+            );
+            minimapCtx.stroke();
+        }
+
+        start();
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+target/
+pkg/
+node_modules/
+*.wasm
+.DS_Store
+agents/
+.playwright-mcp/
+.claude/
+freedoom1.zip
+assets/freedoom1.wad
