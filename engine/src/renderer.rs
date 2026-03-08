@@ -354,6 +354,12 @@ fn render_floors_ceilings_full(
 
             let sector = state.map.get_sector(gx as u32, gy as u32);
 
+            // Sky sector check — ceiling_tex 255 means sky
+            if sector.ceiling_tex == 255 {
+                render_sky_pixel(fb, col, y, state.player.angle, view_mid as usize);
+                continue;
+            }
+
             let tx = ((world_x - world_x.floor()) * FLAT_SIZE as f64) as usize % FLAT_SIZE;
             let ty = ((world_y - world_y.floor()) * FLAT_SIZE as f64) as usize % FLAT_SIZE;
 
@@ -1068,7 +1074,7 @@ fn render_stbar_face(state: &GameState, fb: &mut Framebuffer, bar_y: usize) {
     let h = face.height as usize;
 
     // Center in the STBAR center panel (x=104..174)
-    let center_x: usize = 139;
+    let center_x: usize = 154;
     let fx = center_x.saturating_sub(w / 2);
     let fy = bar_y + 2;
 
@@ -1175,6 +1181,18 @@ pub fn render_automap(state: &GameState, fb: &mut Framebuffer) {
             if gy == 0 && is_wall {
                 for dx in 0..cell {
                     fb.set_rgb(sx + dx, sy, 180, 0, 0);
+                }
+            }
+            // Right edge (boundary)
+            if gx == map_w - 1 && is_wall {
+                for dy in 0..cell {
+                    fb.set_rgb(sx + cell, sy + dy, 180, 0, 0);
+                }
+            }
+            // Bottom edge (boundary)
+            if gy == map_h - 1 && is_wall {
+                for dx in 0..cell {
+                    fb.set_rgb(sx + dx, sy + cell, 180, 0, 0);
                 }
             }
 

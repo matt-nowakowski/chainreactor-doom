@@ -217,10 +217,10 @@ impl DoomMap {
         let layout: Vec<&str> = vec![
             //0123456789012345678901234
             "WWWWWWWWWWWWWWWWWWWWWWWW", // 0
-            "W..........W...........W", // 1  Start hall (bright, safe)
-            "W..........W...........W", // 2
-            "W..........W...........W", // 3
-            "W..........W...........W", // 4
+            "W..........W..........WW", // 1  Start hall (bright, safe)
+            "W..........W..........WW", // 2
+            "W..........W..........WW", // 3
+            "W..........W..........WW", // 4
             "WWWWW.WWWWWWWWWW.WWWWWWW", // 5  Corridor with two branches
             "W..........W..........WW", // 6  West armory (storage)
             "W..........D..........WW", // 7
