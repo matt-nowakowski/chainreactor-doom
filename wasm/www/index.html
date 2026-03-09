@@ -756,8 +756,8 @@
                             Network
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label"><span class="chain-dot offline" id="chain-dot"></span> Status</span>
-                            <span class="stat-value" id="chain-status">Disconnected</span>
+                            <span class="stat-label"><span class="chain-dot" id="chain-dot" style="background:var(--text-dim)"></span> Status</span>
+                            <span class="stat-value" id="chain-status">--</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Runtime</span>
@@ -786,7 +786,9 @@
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                             Latest Blocks
                         </div>
-                        <div class="block-feed" id="block-feed"></div>
+                        <div class="block-feed" id="block-feed">
+                            <div class="block-feed-empty" id="block-feed-empty" style="text-align:center;padding:16px 0;font-size:11px;color:var(--text-dim);">Start game to see blocks</div>
+                        </div>
                     </div>
 
                     <div class="card">
@@ -796,15 +798,15 @@
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Block #</span>
-                            <span class="stat-value" id="block-num" style="color: var(--accent);">0</span>
+                            <span class="stat-value" id="block-num" style="color: var(--accent);">--</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Extrinsics</span>
-                            <span class="stat-value" id="ext-count">0</span>
+                            <span class="stat-value" id="ext-count">--</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Frames</span>
-                            <span class="stat-value" id="frame-count">0</span>
+                            <span class="stat-value" id="frame-count">--</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Players</span>
@@ -1144,6 +1146,81 @@
             titleAnimId = requestAnimationFrame(animateTitle);
         }
         requestAnimationFrame(animateTitle);
+
+        // ═══ PRE-FETCH CHAIN INFO (before user starts game) ═══
+        (async function prefetchChainInfo() {
+            try {
+                const prefetchWs = new WebSocket(NODE_WS);
+                let prefetchRpcId = 1;
+                const pending = {};
+
+                function send(method, params = []) {
+                    return new Promise((resolve, reject) => {
+                        const id = prefetchRpcId++;
+                        pending[id] = { resolve, reject };
+                        prefetchWs.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+                        setTimeout(() => { delete pending[id]; reject(new Error('timeout')); }, 5000);
+                    });
+                }
+
+                prefetchWs.onmessage = (e) => {
+                    const msg = JSON.parse(e.data);
+                    if (msg.id && pending[msg.id]) {
+                        pending[msg.id].resolve(msg.result);
+                        delete pending[msg.id];
+                    }
+                };
+
+                await new Promise((resolve, reject) => {
+                    prefetchWs.onopen = resolve;
+                    prefetchWs.onerror = reject;
+                    setTimeout(reject, 5000);
+                });
+
+                // Fetch chain info in parallel
+                const [header, runtimeVersion] = await Promise.all([
+                    send('chain_getHeader'),
+                    send('state_getRuntimeVersion')
+                ]);
+
+                // Update network card
+                const blockNum = parseInt(header.number, 16);
+                document.getElementById('chain-dot').className = 'chain-dot live';
+                document.getElementById('chain-status').textContent = 'Live';
+                document.getElementById('runtime-name').textContent = runtimeVersion.specName === 'doom-node' ? 'Substrate DOOM' : runtimeVersion.specName;
+                document.getElementById('block-num').textContent = blockNum.toLocaleString();
+                document.getElementById('block-time-stat').textContent = '200ms';
+
+                // Subscribe to new heads to keep block # ticking
+                let lastPrefetchBlock = blockNum;
+                let lastPrefetchTime = performance.now();
+                prefetchWs.send(JSON.stringify({
+                    jsonrpc: '2.0', id: prefetchRpcId++,
+                    method: 'chain_subscribeNewHeads', params: []
+                }));
+
+                prefetchWs.onmessage = (e) => {
+                    const msg = JSON.parse(e.data);
+                    if (msg.params && msg.params.result && msg.params.result.number) {
+                        const num = parseInt(msg.params.result.number, 16);
+                        const now = performance.now();
+                        if (lastPrefetchBlock > 0) {
+                            const dt = now - lastPrefetchTime;
+                            document.getElementById('block-time-stat').textContent = Math.round(dt) + 'ms';
+                        }
+                        lastPrefetchBlock = num;
+                        lastPrefetchTime = now;
+                        document.getElementById('block-num').textContent = num.toLocaleString();
+                    }
+                };
+
+                // Store reference so we can close it when game starts
+                window._prefetchWs = prefetchWs;
+            } catch (e) {
+                console.warn('Pre-fetch failed:', e.message);
+                // Leave panel in default state — not a big deal
+            }
+        })();
 
         // ═══ SCROLL REVEAL ═══
         const observer = new IntersectionObserver((entries) => {
@@ -1655,6 +1732,20 @@
             errorEl.textContent = '';
             statusEl.textContent = 'Connecting...';
             updateConnectionUI('connecting');
+
+            // Close prefetch WebSocket — game will use its own connections
+            if (window._prefetchWs) {
+                try { window._prefetchWs.close(); } catch(e) {}
+                window._prefetchWs = null;
+            }
+
+            // Remove block feed empty state
+            const emptyEl = document.getElementById('block-feed-empty');
+            if (emptyEl) emptyEl.remove();
+
+            // Reset session counters
+            document.getElementById('ext-count').textContent = '0';
+            document.getElementById('frame-count').textContent = '0';
 
             try {
                 // Step 1: Connect raw WebSocket
