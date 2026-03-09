@@ -1180,6 +1180,30 @@
             }
         }
 
+        // ═══ BALANCE AUTO-REFILL ═══
+        let refilling = false;
+        async function ensureBalance() {
+            if (refilling || !api || !account) return;
+            try {
+                const { data: bal } = await api.query.system.account(account.address);
+                const free = BigInt(bal.free.toString());
+                const MIN = BigInt('1000000000000'); // 100 tokens
+                if (free < MIN) {
+                    refilling = true;
+                    console.log('Balance low (' + free.toString() + '), topping up...');
+                    const TOP_UP = BigInt('10000000000000000'); // 10M tokens
+                    await new Promise((resolve) => {
+                        api.tx.sudo.sudo(
+                            api.tx.balances.forceSetBalance(account.address, TOP_UP)
+                        ).signAndSend(account, { nonce: -1 }, ({ status }) => {
+                            if (status.isInBlock) { console.log('Balance topped up'); resolve(); }
+                        }).catch(() => resolve());
+                    });
+                    refilling = false;
+                }
+            } catch (e) { refilling = false; }
+        }
+
         // ═══ INPUT SUBMISSION ═══
         async function submitInputs() {
             if (sendingInput || !gameActive || !api || gameEnded) return;
@@ -1194,6 +1218,8 @@
                 totalExtSent++;
                 document.getElementById('ext-count').textContent = totalExtSent;
             } catch (e) {
+                // If fee error, trigger immediate refill
+                if (e.message && e.message.includes('fees')) ensureBalance();
                 console.warn('Input submit failed:', e.message);
             }
             sendingInput = false;
@@ -1243,6 +1269,8 @@
 
                     // Periodic player cap refresh (every 20 blocks)
                     if (blockNum % 20 === 0) checkPlayerCap();
+                    // Periodic balance check (every 100 blocks = ~20s)
+                    if (blockNum % 100 === 0) ensureBalance();
                     return;
                 }
 
@@ -1329,8 +1357,8 @@
                 const { data: balance } = await api.query.system.account(account.address);
                 const free = BigInt(balance.free.toString());
                 // Threshold: enough for ~1000 games worth of base fees (~1 token)
-                const MIN_BALANCE = BigInt('10000000000'); // 1 token (10 decimals)
-                const TOP_UP_AMOUNT = BigInt('1000000000000000'); // 100k tokens
+                const MIN_BALANCE = BigInt('1000000000000'); // 100 tokens
+                const TOP_UP_AMOUNT = BigInt('10000000000000000'); // 10M tokens
                 if (free < MIN_BALANCE) {
                     statusEl.textContent = 'Topping up balance via sudo...';
                     console.log('Balance low (' + free.toString() + '), topping up via sudo...');
