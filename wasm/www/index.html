@@ -1192,8 +1192,8 @@
                 document.getElementById('block-time-stat').textContent = '200ms';
 
                 // Subscribe to new heads to keep block # ticking
-                let lastPrefetchBlock = blockNum;
-                let lastPrefetchTime = performance.now();
+                let prefetchBlockCount = 0;
+                let lastPrefetchTime = 0;
                 prefetchWs.send(JSON.stringify({
                     jsonrpc: '2.0', id: prefetchRpcId++,
                     method: 'chain_subscribeNewHeads', params: []
@@ -1204,11 +1204,12 @@
                     if (msg.params && msg.params.result && msg.params.result.number) {
                         const num = parseInt(msg.params.result.number, 16);
                         const now = performance.now();
-                        if (lastPrefetchBlock > 0) {
+                        prefetchBlockCount++;
+                        // Skip first 2 blocks to avoid jittery initial measurements
+                        if (prefetchBlockCount > 2 && lastPrefetchTime > 0) {
                             const dt = now - lastPrefetchTime;
                             document.getElementById('block-time-stat').textContent = Math.round(dt) + 'ms';
                         }
-                        lastPrefetchBlock = num;
                         lastPrefetchTime = now;
                         document.getElementById('block-num').textContent = num.toLocaleString();
                     }
@@ -1600,8 +1601,11 @@
         }
 
         // ═══ INPUT SUBMISSION ═══
+        let consecutiveFailures = 0;
+        let resyncingNonce = false;
+
         function submitInputs() {
-            if (!gameActive || !api || gameEnded || nonce === null) return;
+            if (!gameActive || !api || gameEnded || nonce === null || resyncingNonce) return;
 
             const inputs = collectInputs();
             if (inputs.length === 0) return;
@@ -1611,10 +1615,26 @@
             // Fire and forget — manual nonce means no RPC round-trip
             tx.signAndSend(account, { nonce: currentNonce }).then(() => {
                 totalExtSent++;
+                consecutiveFailures = 0;
                 document.getElementById('ext-count').textContent = totalExtSent;
-            }).catch(e => {
+            }).catch(async (e) => {
                 console.warn('Input submit failed (nonce ' + currentNonce + '):', e.message);
+                consecutiveFailures++;
                 if (e.message && e.message.includes('fees')) ensureBalance();
+                // Re-sync nonce from chain after 3 consecutive failures
+                if (consecutiveFailures >= 3 && !resyncingNonce) {
+                    resyncingNonce = true;
+                    console.warn('3+ consecutive failures, re-syncing nonce from chain...');
+                    try {
+                        const fresh = await api.query.system.account(account.address);
+                        nonce = fresh.nonce.toNumber();
+                        consecutiveFailures = 0;
+                        console.log('Nonce re-synced to', nonce);
+                    } catch (err) {
+                        console.warn('Nonce re-sync failed:', err.message);
+                    }
+                    resyncingNonce = false;
+                }
             });
         }
 
@@ -1636,6 +1656,10 @@
                 if (msg.method === 'chain_newHead' && msg.params) {
                     const header = msg.params.result;
                     const blockNum = parseInt(header.number, 16);
+
+                    // Deduplicate — only process if block number advanced
+                    if (blockNum <= lastBlockNumber) return;
+
                     const now = performance.now();
 
                     if (lastBlockTime > 0) {
