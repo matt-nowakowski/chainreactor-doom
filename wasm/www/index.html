@@ -709,7 +709,7 @@
             <span id="connection-label">Technical Demo</span>
         </div>
         <h1>Can your blockchain<br><strong>run DOOM?</strong></h1>
-        <p>The entire game runs on-chain. Physics, AI, enemy logic, collision detection — all executed inside a Substrate runtime by validators. Frames are rendered by the chain and streamed to your browser. Your device is just a screen. Zero client-side game logic.</p>
+        <p>The entire game runs on-chain. Physics, AI, enemy logic, collision detection — all executed inside a Substrate runtime. Frames are rendered by the RPC node and streamed to your browser as raw pixels. Your device is just a screen.</p>
         <div class="specs-bar fade-up d2">
             <div class="spec-item"><code>320×200</code> framebuffer</div>
             <div class="spec-item"><span class="dot"></span></div>
@@ -730,8 +730,8 @@
                 <div class="viewport-wrapper">
                     <canvas id="game-canvas" width="320" height="200"></canvas>
                     <div class="viewport-hud">
-                        <div class="hud-pill" id="latency">-- ms</div>
-                        <div class="hud-pill" id="block-time">-- ms/blk</div>
+                        <div class="hud-pill" id="latency">rtt --</div>
+                        <div class="hud-pill" id="block-time">blk --</div>
                     </div>
                     <div class="viewport-controls-hint">
                         <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
@@ -835,7 +835,7 @@
                         <p class="feature-label">Execution</p>
                         <h3 class="feature-title">Deterministic runtime</h3>
                     </div>
-                    <p class="feature-desc">Every game tick is a state transition executed identically by every validator. Integer-only fixed-point math — no floating point, no divergence. The same inputs always produce the same game state, block after block.</p>
+                    <p class="feature-desc">Every game tick is a state transition executed identically by every validator. Game state uses integer-only fixed-point math (i32×1000) for deterministic consensus — the same inputs always produce the same state, block after block.</p>
                     <div class="feature-visual">
                         <div class="det-grid">
                             <div class="det-dot" style="animation-delay:0s"></div>
@@ -861,9 +861,9 @@
                 <div class="feature-card reveal" style="transition-delay: 0.08s">
                     <div>
                         <p class="feature-label">Infrastructure</p>
-                        <h3 class="feature-title">Validators render your frames</h3>
+                        <h3 class="feature-title">RPC-rendered frames</h3>
                     </div>
-                    <p class="feature-desc">Player inputs are submitted as extrinsics. The game state is ticked on-chain every block. When your browser needs a frame, a validator raycasts the scene, composites sprites, and streams back raw pixels. Your device just paints them to screen.</p>
+                    <p class="feature-desc">Player inputs are submitted as extrinsics and the game state advances on-chain every block. When your browser requests a frame, the RPC node raycasts the scene from on-chain state, composites sprites, and streams back raw pixels. Your device just paints them.</p>
                     <div class="feature-visual">
                         <div class="block-strip">
                             <div class="bar"></div>
@@ -1199,6 +1199,7 @@
             if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; }
             if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
             if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
+            if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }
             return inputs;
         }
 
@@ -1338,15 +1339,26 @@
             if (!gameActive) return;
 
             idleTimer = setTimeout(() => {
-                document.getElementById('connect-status').textContent = 'No input — resetting in 30s...';
-                idleTimer = setTimeout(() => silentAutoReset('Idle timeout — resetting game...'), 30000);
+                showWarning('No input detected — game will restart in 30s', 'stall');
+                idleTimer = setTimeout(() => {
+                    hideWarning();
+                    silentAutoReset('Idle timeout — resetting game...');
+                }, 30000);
             }, IDLE_TIMEOUT_MS - 30000);
         }
 
         // ═══ DEATH/VICTORY IDLE TIMER ═══
         function startDeathIdleTimer() {
             if (deathIdleTimer) clearTimeout(deathIdleTimer);
-            deathIdleTimer = setTimeout(() => silentAutoReset('Resetting game...'), DEATH_IDLE_MS);
+            // Show warning 15s before reset
+            const warnAt = Math.max(DEATH_IDLE_MS - 15000, 0);
+            deathIdleTimer = setTimeout(() => {
+                showWarning('Game will restart due to inactivity', 'stall');
+                deathIdleTimer = setTimeout(() => {
+                    hideWarning();
+                    silentAutoReset('Resetting game...');
+                }, DEATH_IDLE_MS - warnAt);
+            }, warnAt);
         }
         function clearDeathIdleTimer() {
             if (deathIdleTimer) clearTimeout(deathIdleTimer);
@@ -1424,7 +1436,7 @@
                 }
 
                 const latency = Math.round(performance.now() - startTime);
-                document.getElementById('latency').textContent = latency + ' ms';
+                document.getElementById('latency').textContent = 'rtt ' + latency + 'ms';
 
                 if (bytes.length >= FRAME_BYTES) {
                     imageData.data.set(bytes.subarray(0, FRAME_BYTES));
@@ -1450,6 +1462,7 @@
             if (restarting || !api || !account) return;
             restarting = true;
             clearDeathIdleTimer();
+            hideWarning();
             document.getElementById('connect-status').textContent = 'Restarting...';
             try {
                 // Ensure balance before restart tx
@@ -1552,7 +1565,7 @@
                     if (lastBlockTime > 0) {
                         const dt = now - lastBlockTime;
                         blockTimeAvg = blockTimeAvg ? blockTimeAvg * 0.8 + dt * 0.2 : dt;
-                        document.getElementById('block-time').textContent = Math.round(blockTimeAvg) + ' ms/blk';
+                        document.getElementById('block-time').textContent = 'blk ' + Math.round(blockTimeAvg) + 'ms';
                         document.getElementById('block-time-stat').textContent = Math.round(blockTimeAvg) + 'ms';
                     }
                     lastBlockTime = now;
