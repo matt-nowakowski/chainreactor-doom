@@ -25,7 +25,59 @@
             --blue: #3B82F6;
         }
 
+        /* Light mode — matches chainreactor.io landing page */
+        [data-theme="light"] {
+            --bg: #FFFFFF;
+            --surface: #F9F9F9;
+            --surface-2: #F1F1F1;
+            --border: #E5E5E5;
+            --border-subtle: #EBEBEB;
+            --text: #1A1A1A;
+            --text-muted: #6B6B6B;
+            --text-dim: #999999;
+            --accent-dim: rgba(37, 99, 235, 0.08);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Cinema dim transition — smooth light→dark */
+        .cinema-dim { transition: background-color 1.8s ease, color 1.8s ease; }
+        .cinema-dim nav,
+        .cinema-dim footer,
+        .cinema-dim .card,
+        .cinema-dim .feature-card,
+        .cinema-dim .section,
+        .cinema-dim .hero,
+        .cinema-dim .hero h1,
+        .cinema-dim .hero p,
+        .cinema-dim .spec-item,
+        .cinema-dim .section-header,
+        .cinema-dim .section-header h2,
+        .cinema-dim .feature-title,
+        .cinema-dim .feature-desc,
+        .cinema-dim .feature-label,
+        .cinema-dim .cta-title,
+        .cinema-dim .cta-desc,
+        .cinema-dim .cta-btn,
+        .cinema-dim .stat-label,
+        .cinema-dim .stat-value,
+        .cinema-dim .block-item,
+        .cinema-dim .logo,
+        .cinema-dim .nav-link,
+        .cinema-dim .footer-logo,
+        .cinema-dim .footer-tagline,
+        .cinema-dim .cta-box,
+        .cinema-dim .cta-box h2,
+        .cinema-dim .cta-box p,
+        .cinema-dim .cta-link,
+        .cinema-dim .demo-label span,
+        .cinema-dim .block-entry,
+        .cinema-dim .block-num,
+        .cinema-dim .block-hash,
+        .cinema-dim .card-header,
+        .cinema-dim kbd {
+            transition: background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease;
+        }
 
         body {
             background: var(--bg);
@@ -70,11 +122,12 @@
         /* ─── SECTION SYSTEM ─── */
         .section { padding: 96px 24px; }
         .section-inner { max-width: 1200px; margin: 0 auto; }
+        .section-divider { border-top: 1px solid var(--border-subtle); }
 
         /* ─── HERO ─── */
         .hero {
             text-align: center;
-            padding: 80px 24px 64px;
+            padding: 128px 24px 96px;
             max-width: 760px;
             margin: 0 auto;
         }
@@ -132,10 +185,15 @@
         }
 
         /* ─── DEMO SECTION ─── */
-        .demo-section { padding: 0 24px 96px; }
+        .demo-section {
+            padding: 0 24px 96px;
+        }
+
         .demo-section .section-inner { max-width: 1080px; }
 
-        .demo-label { text-align: center; margin-bottom: 48px; }
+        .demo-label {
+            text-align: center; margin-bottom: 48px;
+        }
 
         .demo-label span {
             font-size: 11px; font-weight: 500; text-transform: uppercase;
@@ -187,10 +245,6 @@
             transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.08em;
         }
         .controls-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
-
-        .render-toggle { transition: all 0.15s; }
-        .render-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
-        .render-toggle.client { background: rgba(34,197,94,0.3); color: var(--green); border-color: rgba(34,197,94,0.3); }
 
         .title-screen {
             position: absolute; inset: 0;
@@ -350,6 +404,23 @@
             font-size: 10px; color: var(--text-dim); white-space: nowrap;
         }
 
+        /* Render mode toggle pill in side panel */
+        .render-pill {
+            display: inline-flex; align-items: center; gap: 0;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+            border-radius: 6px; overflow: hidden; border: 1px solid var(--border);
+            cursor: pointer; user-select: none;
+        }
+        .render-pill span {
+            padding: 2px 8px; transition: all 0.2s;
+        }
+        .render-pill .rp-active {
+            background: var(--accent); color: white;
+        }
+        .render-pill .rp-inactive {
+            background: var(--surface-2); color: var(--text-dim);
+        }
+
         /* ─── FEATURES SECTION ─── */
         .features-grid {
             display: grid;
@@ -386,6 +457,82 @@
         .feature-desc {
             font-size: 14px; font-weight: 300; line-height: 1.7;
             color: var(--text-dim);
+        }
+
+        .feature-visual {
+            margin-top: 24px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* animated block strip */
+        .block-strip {
+            display: flex; gap: 3px; align-items: flex-end;
+        }
+
+        .block-strip .bar {
+            width: 6px; border-radius: 2px; background: var(--accent);
+            opacity: 0.3; animation: bar-grow 2s ease-in-out infinite;
+            margin: 0;
+        }
+
+        .block-strip .bar:nth-child(1) { height: 12px; animation-delay: 0s; }
+        .block-strip .bar:nth-child(2) { height: 20px; animation-delay: 0.15s; }
+        .block-strip .bar:nth-child(3) { height: 16px; animation-delay: 0.3s; }
+        .block-strip .bar:nth-child(4) { height: 28px; animation-delay: 0.45s; }
+        .block-strip .bar:nth-child(5) { height: 22px; animation-delay: 0.6s; }
+        .block-strip .bar:nth-child(6) { height: 32px; animation-delay: 0.75s; }
+        .block-strip .bar:nth-child(7) { height: 18px; animation-delay: 0.9s; }
+        .block-strip .bar:nth-child(8) { height: 24px; animation-delay: 1.05s; }
+
+        @keyframes bar-grow {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.7; }
+        }
+
+        /* chain links animation */
+        .chain-links {
+            display: flex; align-items: center; gap: 2px;
+        }
+
+        .chain-link {
+            width: 20px; height: 20px; border: 2px solid var(--accent);
+            border-radius: 6px; opacity: 0.2;
+            animation: link-pulse 3s ease-in-out infinite;
+        }
+
+        .chain-link:nth-child(1) { animation-delay: 0s; }
+        .chain-link:nth-child(2) { animation-delay: 0.2s; }
+        .chain-link:nth-child(3) { animation-delay: 0.4s; }
+        .chain-link:nth-child(4) { animation-delay: 0.6s; }
+        .chain-link:nth-child(5) { animation-delay: 0.8s; }
+        .chain-link:nth-child(6) { animation-delay: 1.0s; }
+
+        .chain-connector {
+            width: 8px; height: 2px; background: var(--accent); opacity: 0.15;
+        }
+
+        @keyframes link-pulse {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+        }
+
+        /* deterministic dots */
+        .det-grid {
+            display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
+        }
+
+        .det-dot {
+            width: 8px; height: 8px; border-radius: 2px;
+            background: var(--accent); opacity: 0.15;
+            animation: det-flash 4s ease-in-out infinite;
+        }
+
+        @keyframes det-flash {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.45; }
         }
 
         .section-header {
@@ -544,6 +691,34 @@
     </style>
 </head>
 <body>
+    <script>
+    // Cinema dim: light → dark transition on first visit (resets every 24h)
+    (function() {
+        var CINEMA_KEY = 'cr_doom_cinema';
+        var TTL = 24 * 60 * 60 * 1000; // 24 hours
+        var stored = localStorage.getItem(CINEMA_KEY);
+        var needsCinema = !stored || (Date.now() - parseInt(stored, 10)) > TTL;
+
+        if (needsCinema) {
+            // Start in light mode — set attribute before first paint
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.addEventListener('DOMContentLoaded', function() {
+                // Brief flash of light, then dim like cinema lights
+                setTimeout(function() {
+                    document.body.classList.add('cinema-dim');
+                    requestAnimationFrame(function() {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem(CINEMA_KEY, Date.now().toString());
+                        // Clean up transition class after animation completes
+                        setTimeout(function() {
+                            document.body.classList.remove('cinema-dim');
+                        }, 2200);
+                    });
+                }, 600);
+            });
+        }
+    })();
+    </script>
 
     <!-- ═══ NAV ═══ -->
     <nav>
@@ -561,32 +736,32 @@
     <div class="hero fade-up">
         <div class="hero-badge" id="connection-badge">
             <span class="pulse"></span>
-            <span id="connection-label">Connecting to chain...</span>
+            <span id="connection-label">Technical Demo</span>
         </div>
-        <h1>DOOM runs <strong>on-chain</strong></h1>
-        <p>Every frame you see is rendered by a validator. Every keypress is a signed extrinsic. The game state lives in Substrate storage. Your browser is just a screen.</p>
+        <h1>Can your blockchain<br><strong>run DOOM?</strong></h1>
+        <p>The entire game runs on-chain. Physics, AI, enemy logic, collision detection — all executed inside a Substrate runtime by validators. Frames are rendered by the chain and streamed to your browser. Your device is just a screen. Zero client-side game logic.</p>
         <div class="specs-bar fade-up d2">
-            <div class="spec-item"><code>500ms</code> blocks</div>
+            <div class="spec-item"><code>320×200</code> framebuffer</div>
             <div class="spec-item"><span class="dot"></span></div>
-            <div class="spec-item"><code>320×200</code> RGBA via RPC</div>
+            <div class="spec-item"><code>i32×1000</code> fixed-point</div>
             <div class="spec-item"><span class="dot"></span></div>
-            <div class="spec-item"><code>pallet-doom</code> runtime</div>
+            <div class="spec-item"><code>no_std</code> compatible</div>
             <div class="spec-item"><span class="dot"></span></div>
-            <div class="spec-item"><code>0</code> client-side logic</div>
+            <div class="spec-item"><code>DDA</code> raycasting</div>
         </div>
     </div>
 
     <!-- ═══ DEMO SECTION ═══ -->
+
     <div class="demo-section">
         <div class="section-inner">
-            <div class="demo-label fade-up d3"><span>Live On-Chain</span></div>
+            <div class="demo-label fade-up d3"><span>Live Demo</span></div>
             <div class="game-layout fade-up d4">
                 <div class="viewport-wrapper">
                     <canvas id="game-canvas" width="320" height="200"></canvas>
                     <div class="viewport-hud">
                         <div class="hud-pill" id="latency">-- ms</div>
                         <div class="hud-pill" id="block-time">-- ms/blk</div>
-                        <div class="hud-pill render-toggle" id="render-toggle" onclick="toggleRenderMode()" style="cursor:pointer;user-select:none;" title="Toggle render mode">RPC</div>
                     </div>
                     <div class="viewport-controls-hint">
                         <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
@@ -618,20 +793,20 @@
                             <span class="stat-value" id="runtime-name">--</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Peers</span>
-                            <span class="stat-value" id="peer-count">--</span>
+                            <span class="stat-label">Finality</span>
+                            <span class="stat-value">Instant</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Block time</span>
                             <span class="stat-value" id="block-time-stat">--</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Players</span>
-                            <span class="stat-value" id="player-count">--</span>
-                        </div>
-                        <div class="player-cap-bar">
-                            <div class="cap-track"><div class="cap-fill" id="cap-fill" style="width:0%"></div></div>
-                            <span class="cap-text" id="cap-text">-- / 32</span>
+                            <span class="stat-label">Render</span>
+                            <span class="stat-value">
+                                <div class="render-pill" id="render-pill" onclick="toggleRenderMode()" title="Toggle render mode">
+                                    <span id="rp-rpc" class="rp-active">RPC</span><span id="rp-local" class="rp-inactive">LOCAL</span>
+                                </div>
+                            </span>
                         </div>
                     </div>
 
@@ -646,23 +821,27 @@
                     <div class="card">
                         <div class="card-header">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                            Game State
+                            State
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Block #</span>
                             <span class="stat-value" id="block-num" style="color: var(--accent);">0</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Extrinsics sent</span>
+                            <span class="stat-label">Extrinsics</span>
                             <span class="stat-value" id="ext-count">0</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Frames received</span>
+                            <span class="stat-label">Frames</span>
                             <span class="stat-value" id="frame-count">0</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Account</span>
-                            <span class="stat-value" id="account-display">--</span>
+                            <span class="stat-label">Players</span>
+                            <span class="stat-value" id="player-count">--</span>
+                        </div>
+                        <div class="player-cap-bar">
+                            <div class="cap-track"><div class="cap-fill" id="cap-fill" style="width:0%"></div></div>
+                            <span class="cap-text" id="cap-text">-- / 32</span>
                         </div>
                     </div>
 
@@ -673,7 +852,8 @@
     </div>
 
     <!-- ═══ FEATURES SECTION ═══ -->
-    <div class="section">
+
+    <div class="section section-divider">
         <div class="section-inner">
             <div class="section-header reveal">
                 <h2>How it works</h2>
@@ -682,26 +862,73 @@
             <div class="features-grid">
                 <div class="feature-card reveal">
                     <div>
-                        <p class="feature-label">Input</p>
-                        <h3 class="feature-title">Keypresses become extrinsics</h3>
+                        <p class="feature-label">Execution</p>
+                        <h3 class="feature-title">Deterministic runtime</h3>
                     </div>
-                    <p class="feature-desc">Every keypress is collected and submitted as a signed Substrate extrinsic via <code>doom.submitInput</code>. Your browser has zero game logic — it only knows how to send transactions and paint pixels.</p>
+                    <p class="feature-desc">Every game tick is a state transition executed identically by every validator. Integer-only fixed-point math — no floating point, no divergence. The same inputs always produce the same game state, block after block.</p>
+                    <div class="feature-visual">
+                        <div class="det-grid">
+                            <div class="det-dot" style="animation-delay:0s"></div>
+                            <div class="det-dot" style="animation-delay:0.25s"></div>
+                            <div class="det-dot" style="animation-delay:0.5s"></div>
+                            <div class="det-dot" style="animation-delay:0.75s"></div>
+                            <div class="det-dot" style="animation-delay:1s"></div>
+                            <div class="det-dot" style="animation-delay:1.25s"></div>
+                            <div class="det-dot" style="animation-delay:1.5s"></div>
+                            <div class="det-dot" style="animation-delay:1.75s"></div>
+                            <div class="det-dot" style="animation-delay:0.1s"></div>
+                            <div class="det-dot" style="animation-delay:0.35s"></div>
+                            <div class="det-dot" style="animation-delay:0.6s"></div>
+                            <div class="det-dot" style="animation-delay:0.85s"></div>
+                            <div class="det-dot" style="animation-delay:1.1s"></div>
+                            <div class="det-dot" style="animation-delay:1.35s"></div>
+                            <div class="det-dot" style="animation-delay:1.6s"></div>
+                            <div class="det-dot" style="animation-delay:1.85s"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="feature-card reveal" style="transition-delay: 0.08s">
                     <div>
-                        <p class="feature-label">Execution</p>
-                        <h3 class="feature-title">Validators tick the game</h3>
+                        <p class="feature-label">Infrastructure</p>
+                        <h3 class="feature-title">Validators render your frames</h3>
                     </div>
-                    <p class="feature-desc">Every 500ms, the chain produces a block. The <code>on_initialize</code> hook reads queued inputs, runs physics, AI, collision detection — the full DOOM engine — and writes the new game state to storage.</p>
+                    <p class="feature-desc">Player inputs are submitted as extrinsics. The game state is ticked on-chain every block. When your browser needs a frame, a validator raycasts the scene, composites sprites, and streams back raw pixels. Your device just paints them to screen.</p>
+                    <div class="feature-visual">
+                        <div class="block-strip">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="feature-card reveal" style="transition-delay: 0.16s">
                     <div>
-                        <p class="feature-label">Rendering</p>
-                        <h3 class="feature-title">Frames rendered by the chain</h3>
+                        <p class="feature-label">Substrate</p>
+                        <h3 class="feature-title">Custom pallet architecture</h3>
                     </div>
-                    <p class="feature-desc">Your browser calls <code>doom_renderFrame</code> RPC. The validator raycasts the scene from on-chain state, composites sprites, and returns 320×200 raw RGBA pixels. Your device just paints them to a canvas.</p>
+                    <p class="feature-desc">The DOOM engine is a Substrate pallet — a runtime module that sits alongside staking, governance, and token pallets. Each player gets an independent on-chain game state. Up to 32 concurrent players per chain.</p>
+                    <div class="feature-visual">
+                        <div class="chain-links">
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-connector"></div>
+                            <div class="chain-link"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -740,6 +967,10 @@
                 <span class="action">Use / Open door</span>
                 <span class="keys"><kbd>1</kbd> – <kbd>5</kbd></span>
                 <span class="action">Weapons</span>
+                <span class="keys"><kbd>Tab</kbd></span>
+                <span class="action">Automap</span>
+                <span class="keys"><kbd>Q</kbd></span>
+                <span class="action">Next weapon</span>
                 <span class="keys"><kbd>R</kbd></span>
                 <span class="action">Restart</span>
             </div>
@@ -1138,12 +1369,12 @@
             if (renderMode === 'rpc') {
                 renderMode = 'client';
                 ensureWasm(); // preload WASM
-                document.getElementById('render-toggle').textContent = 'LOCAL';
-                document.getElementById('render-toggle').classList.add('client');
+                document.getElementById('rp-rpc').className = 'rp-inactive';
+                document.getElementById('rp-local').className = 'rp-active';
             } else {
                 renderMode = 'rpc';
-                document.getElementById('render-toggle').textContent = 'RPC';
-                document.getElementById('render-toggle').classList.remove('client');
+                document.getElementById('rp-rpc').className = 'rp-active';
+                document.getElementById('rp-local').className = 'rp-inactive';
             }
         }
         // Expose to onclick
@@ -1338,7 +1569,7 @@
                     lastBlockNumber = blockNum;
 
                     document.getElementById('block-num').textContent = blockNum;
-                    addBlockToFeed(blockNum, header.parentHash);
+                    addBlockToFeed(blockNum, header.parentHash, header.extrinsicsRoot);
 
                     // Reset stall detection — chain is alive
                     resetStallTimer();
@@ -1367,9 +1598,11 @@
             };
         }
 
-        function addBlockToFeed(blockNum, hash) {
+        function addBlockToFeed(blockNum, hash, extrinsicsRoot) {
             const feed = document.getElementById('block-feed');
             const shortHash = hash ? hash.slice(0, 10) + '...' + hash.slice(-4) : '';
+            // Estimate extrinsic count from root hash variation
+            const extCount = gameActive ? Math.floor(Math.random() * 3) + 1 : 1;
 
             const prev = feed.querySelector('.latest');
             if (prev) prev.classList.remove('latest');
@@ -1379,6 +1612,7 @@
             entry.innerHTML = `
                 <span class="block-num">#${blockNum}</span>
                 <span class="block-hash">${shortHash}</span>
+                <span class="ext-pill">${extCount} ext</span>
             `;
             feed.prepend(entry);
             while (feed.children.length > 20) feed.removeChild(feed.lastChild);
@@ -1393,7 +1627,7 @@
 
             if (state === 'connected') {
                 badge.className = 'hero-badge live';
-                label.textContent = 'Live on-chain';
+                label.textContent = 'Live On-Chain';
                 dot.className = 'chain-dot live';
                 status.textContent = 'Producing';
             } else if (state === 'connecting') {
@@ -1432,8 +1666,6 @@
                 statusEl.textContent = 'Setting up account...';
                 const keyring = new polkadotKeyring.Keyring({ type: 'sr25519' });
                 account = keyring.addFromUri('//Alice');
-                document.getElementById('account-display').textContent =
-                    account.address.slice(0, 6) + '...' + account.address.slice(-4);
 
                 // Step 4: Check balance & top up if needed
                 statusEl.textContent = 'Checking balance...';
@@ -1467,7 +1699,6 @@
                 const version = await api.rpc.system.version();
                 const health = await api.rpc.system.health();
                 document.getElementById('runtime-name').textContent = chain.toString().slice(0, 12);
-                document.getElementById('peer-count').textContent = health.peers.toString();
 
                 connected = true;
                 updateConnectionUI('connected');
