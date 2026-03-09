@@ -962,7 +962,6 @@
 
             // Game ended: any key restarts
             if (gameEnded) {
-                gameEnded = false;
                 restartGame();
                 return;
             }
@@ -1226,9 +1225,14 @@
             }
         }
 
+        let restarting = false;
         async function restartGame() {
+            if (restarting || !api || !account) return;
+            restarting = true;
             document.getElementById('status-msg').textContent = 'Restarting...';
             try {
+                // Ensure balance before restart tx
+                await ensureBalance();
                 await new Promise((resolve, reject) => {
                     api.tx.doom.resetGame().signAndSend(account, { nonce: -1 }, ({ status, dispatchError }) => {
                         if (dispatchError) {
@@ -1253,8 +1257,10 @@
                 resetIdleTimer();
             } catch (e) {
                 console.warn('Restart failed:', e.message);
-                document.getElementById('status-msg').textContent = 'Restart failed: ' + e.message;
+                document.getElementById('status-msg').textContent = 'Restart failed — press any key to retry';
+                gameEnded = true; // allow retry
             }
+            restarting = false;
         }
 
         // ═══ BALANCE AUTO-REFILL ═══
