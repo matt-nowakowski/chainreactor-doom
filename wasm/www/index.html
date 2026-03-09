@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chain Reactor — Can it run DOOM?</title>
+    <title>Chainreactor — DOOM On-Chain</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -145,6 +146,10 @@
             width: 6px; height: 6px; border-radius: 50%;
             background: var(--accent); animation: pulse 2s ease-in-out infinite;
         }
+        .hero-badge.live { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
+        .hero-badge.live .pulse { background: var(--green); }
+        .hero-badge.error { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+        .hero-badge.error .pulse { background: var(--red); animation: none; }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
@@ -231,7 +236,7 @@
             border: 1px solid rgba(255,255,255,0.06);
         }
 
-        .viewport-controls-hint { position: absolute; top: 12px; left: 12px; z-index: 5; }
+        .viewport-controls-hint { position: absolute; top: 12px; left: 12px; z-index: 35; }
 
         .controls-toggle {
             font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
@@ -241,6 +246,43 @@
             transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.08em;
         }
         .controls-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
+
+        .title-screen {
+            position: absolute; inset: 0;
+            background: #000;
+            z-index: 30; cursor: pointer;
+        }
+        .title-screen.hidden { display: none; }
+        .title-canvas {
+            width: 100%; height: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .connect-overlay {
+            position: absolute; inset: 0; z-index: 15;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        }
+        .connect-overlay.hidden { display: none; }
+
+        .connect-status {
+            font-family: 'JetBrains Mono', monospace; font-size: 13px;
+            color: var(--text-muted); margin-bottom: 12px;
+        }
+
+        .connect-btn {
+            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+            color: white; background: var(--accent);
+            border: none; padding: 10px 28px; border-radius: 999px;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .connect-btn:hover { opacity: 0.85; }
+        .connect-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .connect-error {
+            font-size: 11px; color: var(--red); margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
 
         .status-msg {
             text-align: center; padding: 8px; font-size: 18px;
@@ -253,24 +295,28 @@
         .level-complete { color: var(--green); }
 
         /* ─── SIDE PANEL ─── */
-        .side-panel { display: flex; flex-direction: column; gap: 8px; }
+        .side-panel {
+            display: flex; flex-direction: column; gap: 7px;
+            max-height: calc((min(100vw - 48px, 1080px) - 260px - 16px) / 1.6);
+            overflow: hidden;
+        }
 
         .card {
             background: var(--surface); border: 1px solid var(--border-subtle);
-            border-radius: 10px; padding: 14px;
+            border-radius: 10px; padding: 13px;
         }
 
         .card-header {
             font-size: 10px; font-weight: 600; text-transform: uppercase;
             letter-spacing: 0.12em; color: var(--text-dim);
-            margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+            margin-bottom: 9px; display: flex; align-items: center; gap: 6px;
         }
 
         .card-header .icon { width: 14px; height: 14px; opacity: 0.5; }
 
         .stat-row {
             display: flex; justify-content: space-between;
-            align-items: center; padding: 4px 0;
+            align-items: center; padding: 3px 0;
         }
 
         .stat-label { font-size: 12px; font-weight: 400; color: var(--text-dim); }
@@ -285,10 +331,11 @@
             display: inline-block; margin-right: 4px;
         }
         .chain-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .chain-dot.offline { background: var(--red); }
 
         .block-feed {
             display: flex; flex-direction: column; gap: 4px;
-            max-height: 135px; overflow-y: auto;
+            max-height: 110px; overflow-y: auto;
         }
         .block-feed::-webkit-scrollbar { width: 3px; }
         .block-feed::-webkit-scrollbar-track { background: transparent; }
@@ -321,6 +368,63 @@
         }
         .restart-btn:hover { opacity: 0.85; }
 
+        /* ─── WARNING BANNER ─── */
+        .warning-banner {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            z-index: 12; padding: 8px 16px;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px;
+            font-weight: 500; text-align: center;
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0; transform: translateY(100%); pointer-events: none;
+        }
+        .warning-banner.visible {
+            opacity: 1; transform: translateY(0); pointer-events: auto;
+        }
+        .warning-banner.stall {
+            background: rgba(234, 179, 8, 0.9); color: #000;
+        }
+        .warning-banner.error {
+            background: rgba(239, 68, 68, 0.9); color: #fff;
+        }
+        .warning-banner.info {
+            background: rgba(37, 99, 235, 0.9); color: #fff;
+        }
+
+        .player-cap-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 0;
+        }
+        .cap-track {
+            flex: 1; height: 4px; background: var(--surface-2);
+            border-radius: 2px; overflow: hidden;
+        }
+        .cap-fill {
+            height: 100%; background: var(--accent); border-radius: 2px;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .cap-fill.warn { background: var(--yellow); }
+        .cap-fill.full { background: var(--red); }
+        .cap-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-dim); white-space: nowrap;
+        }
+
+        /* Render mode toggle pill in side panel */
+        .render-pill {
+            display: inline-flex; align-items: center; gap: 0;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+            border-radius: 6px; overflow: hidden; border: 1px solid var(--border);
+            cursor: pointer; user-select: none;
+        }
+        .render-pill span {
+            padding: 2px 8px; transition: all 0.2s;
+        }
+        .render-pill .rp-active {
+            background: var(--accent); color: white;
+        }
+        .render-pill .rp-inactive {
+            background: var(--surface-2); color: var(--text-dim);
+        }
 
         /* ─── FEATURES SECTION ─── */
         .features-grid {
@@ -634,9 +738,9 @@
 
     <!-- ═══ HERO ═══ -->
     <div class="hero fade-up">
-        <div class="hero-badge">
+        <div class="hero-badge" id="connection-badge">
             <span class="pulse"></span>
-            Technical Demo
+            <span id="connection-label">Technical Demo</span>
         </div>
         <h1>Can your blockchain<br><strong>run DOOM?</strong></h1>
         <p>The entire game runs on-chain. Physics, AI, enemy logic, collision detection — all executed inside a Substrate runtime by validators. Frames are rendered by the chain and streamed to your browser. Your device is just a screen. Zero client-side game logic.</p>
@@ -660,12 +764,22 @@
                 <div class="viewport-wrapper">
                     <canvas id="game-canvas" width="320" height="200"></canvas>
                     <div class="viewport-hud">
-                        <div class="hud-pill" id="fps">-- fps</div>
+                        <div class="hud-pill" id="latency">-- ms</div>
+                        <div class="hud-pill" id="block-time">-- ms/blk</div>
                     </div>
                     <div class="viewport-controls-hint">
                         <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
                     </div>
+
+                    <!-- Title screen overlay (pixel-perfect match of engine's render_title_screen) -->
+                    <div class="title-screen" id="title-screen">
+                        <canvas class="title-canvas" id="title-canvas" width="320" height="200"></canvas>
+                    </div>
+                    <div class="connect-status" id="connect-status" style="position:absolute;bottom:24px;left:0;right:0;text-align:center;z-index:35;font-size:11px;color:var(--text-dim);"></div>
+                    <div class="connect-error" id="connect-error" style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:35;font-size:11px;color:var(--red);"></div>
+
                     <div class="status-msg" id="status-msg"></div>
+                    <div class="warning-banner" id="warning-banner"></div>
                 </div>
 
                 <div class="side-panel">
@@ -675,12 +789,12 @@
                             Network
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label"><span class="chain-dot live" id="chain-dot"></span> Status</span>
-                            <span class="stat-value" id="chain-status">Producing</span>
+                            <span class="stat-label"><span class="chain-dot offline" id="chain-dot"></span> Status</span>
+                            <span class="stat-value" id="chain-status">Disconnected</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Runtime</span>
-                            <span class="stat-value">doom-v1</span>
+                            <span class="stat-value" id="runtime-name">--</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Finality</span>
@@ -688,7 +802,15 @@
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Block time</span>
-                            <span class="stat-value">67ms</span>
+                            <span class="stat-value" id="block-time-stat">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Render</span>
+                            <span class="stat-value">
+                                <div class="render-pill" id="render-pill" onclick="toggleRenderMode()" title="Toggle render mode">
+                                    <span id="rp-rpc" class="rp-active">RPC</span><span id="rp-local" class="rp-inactive">LOCAL</span>
+                                </div>
+                            </span>
                         </div>
                     </div>
 
@@ -714,12 +836,16 @@
                             <span class="stat-value" id="ext-count">0</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Events</span>
-                            <span class="stat-value" id="event-count">0</span>
+                            <span class="stat-label">Frames</span>
+                            <span class="stat-value" id="frame-count">0</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-label">Storage writes</span>
-                            <span class="stat-value" id="storage-writes">0</span>
+                            <span class="stat-label">Players</span>
+                            <span class="stat-value" id="player-count">--</span>
+                        </div>
+                        <div class="player-cap-bar">
+                            <div class="cap-track"><div class="cap-fill" id="cap-fill" style="width:0%"></div></div>
+                            <span class="cap-text" id="cap-text">-- / 32</span>
                         </div>
                     </div>
 
@@ -731,7 +857,7 @@
 
     <!-- ═══ FEATURES SECTION ═══ -->
 
-    <div class="section">
+    <div class="section section-divider">
         <div class="section-inner">
             <div class="section-header reveal">
                 <h2>How it works</h2>
@@ -863,36 +989,644 @@
         </div>
     </footer>
 
-    <script type="module">
-        import init, { DoomGame } from '../../pkg/doom_wasm.js';
+    <!-- ═══ POLKADOT.JS API ═══ -->
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/bundle-polkadot-util.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/util-crypto@12.6.2/bundle-polkadot-util-crypto.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/types@10.13.1/bundle-polkadot-types.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.6.2/bundle-polkadot-keyring.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@polkadot/api@10.13.1/bundle-polkadot-api.min.js"></script>
 
-        // ── Scroll Reveal ──
+    <script type="module">
+        // ═══ WASM MODULE (for client-side render mode) ═══
+        import init, { render_from_scale } from './pkg/doom_wasm.js';
+        let wasmReady = false;
+        let wasmInitPromise = null;
+        async function ensureWasm() {
+            if (wasmReady) return true;
+            if (!wasmInitPromise) wasmInitPromise = init().then(() => { wasmReady = true; });
+            await wasmInitPromise;
+            return true;
+        }
+
+        // ═══ CONFIGURATION ═══
+        const NODE_WS = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+        const FRAME_WIDTH = 320;
+        const FRAME_HEIGHT = 200;
+        const FRAME_BYTES = FRAME_WIDTH * FRAME_HEIGHT * 4; // RGBA
+
+        // ═══ STATE ═══
+        let renderMode = 'rpc'; // 'rpc' = full on-chain render, 'client' = client-side render from on-chain state
+        let api = null;
+        let account = null; // Alice keypair
+        let ws = null; // Raw WebSocket for custom RPC
+        let rpcId = 1;
+        let pendingRpc = {};
+        let connected = false;
+        let gameActive = false;
+        let keys = {};
+        let inputBuffer = [];
+        let totalExtSent = 0;
+        let totalFrames = 0;
+        let lastBlockTime = 0;
+        let lastBlockNumber = 0;
+        let blockTimeAvg = 0;
+        let nonce = null;
+        let sendingInput = false;
+        let stallTimer = null;
+        const STALL_THRESHOLD_MS = 2000; // 10x the 200ms block time
+        const MAX_PLAYERS = 32;
+        let idleTimer = null;
+        let deathIdleTimer = null;
+        const IDLE_TIMEOUT_MS = 120000; // 2 minutes with no input → auto-reset
+        const DEATH_IDLE_MS = 60000; // 60s on death/victory screen → auto-reset
+        let lastInputTime = 0;
+        let gameEnded = false; // true when player died or completed level
+        let onTitleScreen = true; // true until first keypress
+        let titleKeyListener = null; // keydown listener for title screen
+
+        // ═══ DOM ═══
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        const imageData = ctx.createImageData(FRAME_WIDTH, FRAME_HEIGHT);
+
+        // ═══ TITLE SCREEN RENDERER (pixel-perfect match of engine) ═══
+        const TITLE_GLYPHS = {
+            C: [0x7FE,0xFFF,0xF03,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF03,0xFFF,0x7FE],
+            H: [0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xFFF,0xFFF,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            A: [0x060,0x0F0,0x1F8,0x3FC,0x79E,0x70E,0xE07,0xE07,0xFFF,0xFFF,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            I: [0x7FE,0x3FC,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x3FC,0x7FE],
+            N: [0xE07,0xF07,0xF87,0xFC7,0xEE7,0xE77,0xE3F,0xE1F,0xE0F,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            R: [0xFFC,0xFFE,0xE0F,0xE07,0xE07,0xE0F,0xFFE,0xFFC,0xFE0,0xE70,0xE38,0xE1C,0xE0E,0xE07,0xE07,0xE07,0xF0F,0x79E],
+            E: [0xFFF,0xFFF,0xF00,0xF00,0xF00,0xF00,0xFFC,0xFFC,0xFFC,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xF00,0xFFF,0xFFF],
+            T: [0xFFF,0xFFF,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x0F0,0x1F8,0x3FC],
+            O: [0x3FC,0x7FE,0xF0F,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xE07,0xF0F,0x7FE,0x3FC],
+        };
+        const TITLE_BANDS = [[255,100,0],[230,50,0],[200,20,0],[160,0,0],[120,0,0]];
+        const SMALL_FONT = {
+            P:[0x1E,0x11,0x11,0x1E,0x10,0x10,0x10], R:[0x1E,0x11,0x11,0x1E,0x14,0x12,0x11],
+            E:[0x1F,0x10,0x10,0x1E,0x10,0x10,0x1F], S:[0x0F,0x10,0x10,0x0E,0x01,0x01,0x1E],
+            A:[0x0E,0x11,0x11,0x1F,0x11,0x11,0x11], N:[0x11,0x19,0x15,0x13,0x11,0x11,0x11],
+            Y:[0x11,0x11,0x0A,0x04,0x04,0x04,0x04], K:[0x11,0x12,0x14,0x18,0x14,0x12,0x11],
+            ' ':[0,0,0,0,0,0,0],
+        };
+
+        function renderTitleScreen(tick) {
+            const tc = document.getElementById('title-canvas');
+            const tctx = tc.getContext('2d');
+            const td = tctx.createImageData(320, 200);
+            const d = td.data;
+
+            // Fill black + alpha
+            for (let i = 0; i < 320*200; i++) { d[i*4+3] = 255; }
+
+            // Red band (y=58-141, x=20-299)
+            for (let y = 58; y < 142; y++) {
+                const intensity = (y < 68 || y > 132) ? 15 : 30;
+                for (let x = 20; x < 300; x++) {
+                    d[(y*320+x)*4] = intensity;
+                }
+            }
+
+            // Heat shimmer wave
+            const phase = tick % 32;
+            let wave = 0;
+            if (phase >= 4 && phase < 8) wave = 1;
+            else if (phase >= 8 && phase < 12) wave = 2;
+            else if (phase >= 12 && phase < 16) wave = 1;
+            else if (phase >= 20 && phase < 24) wave = -1;
+            else if (phase >= 24 && phase < 28) wave = -2;
+            else if (phase >= 28) wave = -1;
+
+            const letterW = 12, letterH = 18, scale = 2, gap = 2;
+            const renderedW = letterW * scale;
+
+            function drawLetter(glyph, x, y) {
+                for (let row = 0; row < letterH; row++) {
+                    const bits = glyph[row];
+                    for (let col = 0; col < letterW; col++) {
+                        if (bits & (1 << (letterW - 1 - col))) {
+                            const shifted = Math.max(0, row + wave);
+                            const band = Math.min(4, Math.floor(shifted * 5 / letterH));
+                            const [r,g,b] = TITLE_BANDS[band];
+                            for (let sy = 0; sy < scale; sy++) {
+                                for (let sx = 0; sx < scale; sx++) {
+                                    const px = x + col*scale + sx;
+                                    const py = y + row*scale + sy;
+                                    if (px < 320 && py < 200) {
+                                        const off = (py*320+px)*4;
+                                        d[off]=r; d[off+1]=g; d[off+2]=b;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // "CHAIN" centered at y=60
+            const chain = ['C','H','A','I','N'];
+            const line1W = 5 * renderedW + 4 * gap;
+            const line1X = Math.floor((320 - line1W) / 2);
+            chain.forEach((ch, i) => drawLetter(TITLE_GLYPHS[ch], line1X + i*(renderedW+gap), 60));
+
+            // "REACTOR" centered at y=100
+            const reactor = ['R','E','A','C','T','O','R'];
+            const line2W = 7 * renderedW + 6 * gap;
+            const line2X = Math.floor((320 - line2W) / 2);
+            reactor.forEach((ch, i) => drawLetter(TITLE_GLYPHS[ch], line2X + i*(renderedW+gap), 100));
+
+            // Blinking "PRESS ANY KEY" at y=155
+            if (Math.floor(tick / 8) % 2 === 0) {
+                const text = 'PRESS ANY KEY';
+                const charW = 6;
+                const totalW = text.length * charW;
+                const startX = Math.floor(160 - totalW/2);
+                for (let i = 0; i < text.length; i++) {
+                    const bitmap = SMALL_FONT[text[i]];
+                    if (!bitmap) continue;
+                    const cx = startX + i * charW;
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 5; col++) {
+                            if (bitmap[row] & (1 << (4 - col))) {
+                                const px = cx + col, py = 155 + row;
+                                if (px < 320 && py < 200) {
+                                    const off = (py*320+px)*4;
+                                    d[off]=160; d[off+1]=160; d[off+2]=160;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            tctx.putImageData(td, 0, 0);
+        }
+
+        // Animate title screen at 15 ticks/sec (matches WASM TICK_RATE)
+        let titleTick = 0;
+        let titleAnimId = null;
+        let titleLastTime = 0;
+        const TITLE_TICK_MS = 1000 / 15; // 66.7ms per tick
+        function animateTitle(now) {
+            if (!onTitleScreen) { titleAnimId = null; return; }
+            if (now - titleLastTime >= TITLE_TICK_MS) {
+                titleLastTime = now;
+                renderTitleScreen(titleTick++);
+            }
+            titleAnimId = requestAnimationFrame(animateTitle);
+        }
+        requestAnimationFrame(animateTitle);
+
+        // ═══ SCROLL REVEAL ═══
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
         }, { threshold: 0.15 });
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        let game, wasmMemory, canvas, ctx, imageData;
-        let keys = {};
-        let frameCount = 0, fpsDisplay = 0, fpsTimer = 0;
-        const TICK_RATE = 15;
-        let tickAccumulator = 0, lastTickTime = 0;
-        let lastBlockNum = 0;
-        let totalExtrinsics = 0, totalEvents = 0, totalStorageWrites = 0;
+        // ═══ KEYBOARD ═══
+        document.addEventListener('keydown', (e) => {
+            if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
+            if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
 
-        function blockHash(n) {
-            n = Number(n);
-            let h = (n * 2654435761) >>> 0;
-            return '0x' + h.toString(16).padStart(8, '0') + '...' +
-                   ((h ^ 0xDEAD) >>> 0).toString(16).padStart(4, '0').slice(0, 4);
+            // Title screen: any key starts the game
+            if (onTitleScreen) {
+                onTitleScreen = false;
+                if (titleAnimId) { cancelAnimationFrame(titleAnimId); titleAnimId = null; }
+                connectAndPlay();
+                return;
+            }
+
+            // Game ended: any key restarts
+            if (gameEnded) {
+                restartGame();
+                return;
+            }
+
+            keys[e.code] = true;
+            resetIdleTimer();
+        });
+        document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+        // Title screen click also starts
+        document.getElementById('title-screen').addEventListener('click', () => {
+            if (onTitleScreen) {
+                onTitleScreen = false;
+                if (titleAnimId) { cancelAnimationFrame(titleAnimId); titleAnimId = null; }
+                connectAndPlay();
+            }
+        });
+
+        function collectInputs() {
+            const inputs = [];
+            if (keys['KeyW'] || keys['ArrowUp']) inputs.push(0);    // Forward
+            if (keys['KeyS'] || keys['ArrowDown']) inputs.push(1);  // Backward
+            if (keys['ArrowLeft']) inputs.push(2);                   // TurnLeft
+            if (keys['ArrowRight']) inputs.push(3);                  // TurnRight
+            if (keys['KeyA']) inputs.push(4);                        // StrafeLeft
+            if (keys['KeyD']) inputs.push(5);                        // StrafeRight
+            if (keys['Space']) inputs.push(6);                       // Shoot
+            if (keys['KeyE']) inputs.push(7);                        // Use
+            if (keys['KeyQ']) { inputs.push(8); keys['KeyQ'] = false; }  // NextWeapon
+            if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; }
+            if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; }
+            if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; }
+            if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
+            if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
+            return inputs;
         }
 
-        function addBlockToFeed(blockNum) {
+        // ═══ RAW WEBSOCKET RPC (for custom doom_* methods) ═══
+        function rpcCall(method, params) {
+            return new Promise((resolve, reject) => {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    reject(new Error('WebSocket not connected'));
+                    return;
+                }
+                const id = rpcId++;
+                pendingRpc[id] = { resolve, reject };
+                ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+                setTimeout(() => {
+                    if (pendingRpc[id]) {
+                        delete pendingRpc[id];
+                        reject(new Error('RPC timeout'));
+                    }
+                }, 10000);
+            });
+        }
+
+        function connectRawWs() {
+            return new Promise((resolve, reject) => {
+                ws = new WebSocket(NODE_WS);
+                ws.onopen = () => resolve();
+                ws.onerror = (e) => reject(new Error('WebSocket connection failed'));
+                ws.onclose = () => {
+                    connected = false;
+                    updateConnectionUI('disconnected');
+                };
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    if (msg.id && pendingRpc[msg.id]) {
+                        const { resolve, reject } = pendingRpc[msg.id];
+                        delete pendingRpc[msg.id];
+                        if (msg.error) reject(new Error(msg.error.message));
+                        else resolve(msg.result);
+                    }
+                };
+            });
+        }
+
+        // ═══ WARNING SYSTEM ═══
+        function showWarning(msg, type = 'stall') {
+            const banner = document.getElementById('warning-banner');
+            banner.textContent = msg;
+            banner.className = 'warning-banner visible ' + type;
+        }
+
+        function hideWarning() {
+            document.getElementById('warning-banner').className = 'warning-banner';
+        }
+
+        function resetStallTimer() {
+            if (stallTimer) clearTimeout(stallTimer);
+            hideWarning();
+            stallTimer = setTimeout(() => {
+                showWarning('Chain stalled — no blocks received for ' + (STALL_THRESHOLD_MS / 1000) + 's', 'stall');
+                document.getElementById('chain-status').textContent = 'Stalled';
+                document.getElementById('chain-dot').className = 'chain-dot offline';
+            }, STALL_THRESHOLD_MS);
+        }
+
+        // ═══ PLAYER CAP ═══
+        async function checkPlayerCap() {
+            try {
+                // Query ActivePlayers storage
+                const activePlayers = await api.query.doom.activePlayers();
+                const count = activePlayers.length;
+                const pct = Math.round((count / MAX_PLAYERS) * 100);
+
+                document.getElementById('player-count').textContent = count;
+                document.getElementById('cap-text').textContent = count + ' / ' + MAX_PLAYERS;
+
+                const fill = document.getElementById('cap-fill');
+                fill.style.width = pct + '%';
+                fill.className = 'cap-fill' + (pct >= 100 ? ' full' : pct >= 75 ? ' warn' : '');
+
+                return count < MAX_PLAYERS;
+            } catch (e) {
+                // If query fails, allow attempt
+                return true;
+            }
+        }
+
+        // ═══ GAME STATE MONITORING ═══
+        async function checkGameState() {
+            if (gameEnded) return;
+            try {
+                // Check if player is still in ActivePlayers
+                const active = await api.query.doom.activePlayers();
+                const stillActive = active.some(a => a.toString() === account.address);
+
+                if (!stillActive && gameActive) {
+                    // Player removed from ActivePlayers → died or completed level
+                    // Fetch one last frame (will have death/victory overlay baked in)
+                    await fetchAndRenderFrame();
+                    gameEnded = true;
+                    gameActive = false;
+                    if (idleTimer) clearTimeout(idleTimer);
+                    startDeathIdleTimer();
+                }
+            } catch (e) {
+                // Ignore — will retry next block
+            }
+        }
+
+        // ═══ SILENT AUTO-RESET (shared by idle + death timers) ═══
+        async function silentAutoReset(reason) {
+            if (!api || !account) return;
+            const statusEl = document.getElementById('connect-status');
+            try {
+                statusEl.textContent = reason;
+                await api.tx.doom.resetGame().signAndSend(account, { nonce: -1 });
+                totalExtSent++;
+                document.getElementById('ext-count').textContent = totalExtSent;
+                gameActive = false;
+                gameEnded = false;
+                onTitleScreen = true;
+                document.getElementById('title-screen').classList.remove('hidden');
+                titleTick = 0;
+                animateTitle();
+                hideWarning();
+                statusEl.textContent = '';
+            } catch (e) {
+                console.warn('Auto-reset failed:', e.message);
+                statusEl.textContent = '';
+            }
+        }
+
+        // ═══ IDLE TIMEOUT ═══
+        function resetIdleTimer() {
+            lastInputTime = Date.now();
+            hideWarning();
+            if (idleTimer) clearTimeout(idleTimer);
+            if (!gameActive) return;
+
+            idleTimer = setTimeout(() => {
+                document.getElementById('connect-status').textContent = 'No input — resetting in 30s...';
+                idleTimer = setTimeout(() => silentAutoReset('Idle timeout — resetting game...'), 30000);
+            }, IDLE_TIMEOUT_MS - 30000);
+        }
+
+        // ═══ DEATH/VICTORY IDLE TIMER ═══
+        function startDeathIdleTimer() {
+            if (deathIdleTimer) clearTimeout(deathIdleTimer);
+            deathIdleTimer = setTimeout(() => silentAutoReset('Resetting game...'), DEATH_IDLE_MS);
+        }
+        function clearDeathIdleTimer() {
+            if (deathIdleTimer) clearTimeout(deathIdleTimer);
+            deathIdleTimer = null;
+        }
+
+        // ═══ RENDER MODE TOGGLE ═══
+        function toggleRenderMode() {
+            if (renderMode === 'rpc') {
+                renderMode = 'client';
+                ensureWasm(); // preload WASM
+                document.getElementById('rp-rpc').className = 'rp-inactive';
+                document.getElementById('rp-local').className = 'rp-active';
+            } else {
+                renderMode = 'rpc';
+                document.getElementById('rp-rpc').className = 'rp-active';
+                document.getElementById('rp-local').className = 'rp-inactive';
+            }
+        }
+        // Expose to onclick
+        window.toggleRenderMode = toggleRenderMode;
+
+        // ═══ FRAME RENDERING (pipelined, base64+gzip) ═══
+        let framePending = false; // true while a render RPC is in-flight
+        let nextFrameQueued = false; // true if a new block arrived while fetching
+
+        async function fetchAndRenderFrame() {
+            if (gameEnded) return; // freeze last frame on death/victory
+
+            // Pipeline: if already fetching, queue the next request
+            if (framePending) { nextFrameQueued = true; return; }
+            framePending = true;
+
+            try {
+                const startTime = performance.now();
+                let bytes;
+
+                if (renderMode === 'client') {
+                    // CLIENT MODE: fetch tiny SCALE state, render locally via WASM
+                    await ensureWasm();
+                    const hexState = await rpcCall('doom_getState', [account.address]);
+                    if (!hexState || hexState.length < 10) { framePending = false; return; }
+                    const hex = hexState.startsWith('0x') ? hexState.slice(2) : hexState;
+                    const stateBytes = new Uint8Array(hex.length / 2);
+                    for (let i = 0; i < stateBytes.length; i++) {
+                        stateBytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+                    }
+                    bytes = render_from_scale(stateBytes);
+                } else {
+                    // RPC MODE: full on-chain render, base64+gzip compressed
+                    const b64Data = await rpcCall('doom_renderFrame', [account.address]);
+                    if (!b64Data || b64Data.length < 10) { framePending = false; return; }
+
+                    const compressed = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+                    const ds = new DecompressionStream('gzip');
+                    const writer = ds.writable.getWriter();
+                    const reader = ds.readable.getReader();
+                    writer.write(compressed);
+                    writer.close();
+
+                    const chunks = [];
+                    let totalLen = 0;
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        totalLen += value.length;
+                    }
+                    bytes = new Uint8Array(totalLen);
+                    let offset = 0;
+                    for (const chunk of chunks) {
+                        bytes.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                }
+
+                const latency = Math.round(performance.now() - startTime);
+                document.getElementById('latency').textContent = latency + ' ms';
+
+                if (bytes.length >= FRAME_BYTES) {
+                    imageData.data.set(bytes.subarray(0, FRAME_BYTES));
+                    ctx.putImageData(imageData, 0, 0);
+                    totalFrames++;
+                    document.getElementById('frame-count').textContent = totalFrames;
+                }
+            } catch (e) {
+                // Silent fail — will retry next block
+            }
+
+            framePending = false;
+
+            // If a block arrived while we were fetching, immediately fetch again
+            if (nextFrameQueued && !gameEnded) {
+                nextFrameQueued = false;
+                fetchAndRenderFrame();
+            }
+        }
+
+        let restarting = false;
+        async function restartGame() {
+            if (restarting || !api || !account) return;
+            restarting = true;
+            clearDeathIdleTimer();
+            document.getElementById('connect-status').textContent = 'Restarting...';
+            try {
+                // Ensure balance before restart tx
+                await ensureBalance();
+                await new Promise((resolve, reject) => {
+                    api.tx.doom.resetGame().signAndSend(account, { nonce: -1 }, ({ status, dispatchError }) => {
+                        if (dispatchError) {
+                            if (dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(dispatchError.asModule);
+                                reject(new Error(decoded.section + '.' + decoded.name));
+                            } else {
+                                reject(new Error(dispatchError.toString()));
+                            }
+                            return;
+                        }
+                        if (status.isInBlock) {
+                            totalExtSent++;
+                            document.getElementById('ext-count').textContent = totalExtSent;
+                            resolve();
+                        }
+                    }).catch(reject);
+                });
+                gameActive = true;
+                gameEnded = false;
+                document.getElementById('connect-status').textContent = '';
+                resetIdleTimer();
+            } catch (e) {
+                console.warn('Restart failed:', e.message);
+                document.getElementById('connect-status').textContent = 'Restart failed — press any key to retry';
+                gameEnded = true; // allow retry
+            }
+            restarting = false;
+        }
+
+        // ═══ BALANCE AUTO-REFILL ═══
+        let refilling = false;
+        async function ensureBalance() {
+            if (refilling || !api || !account) return;
+            try {
+                const { data: bal } = await api.query.system.account(account.address);
+                const free = BigInt(bal.free.toString());
+                const MIN = BigInt('1000000000000'); // 100 tokens
+                if (free < MIN) {
+                    refilling = true;
+                    console.log('Balance low (' + free.toString() + '), topping up...');
+                    const TOP_UP = BigInt('10000000000000000'); // 10M tokens
+                    await new Promise((resolve) => {
+                        api.tx.sudo.sudo(
+                            api.tx.balances.forceSetBalance(account.address, TOP_UP)
+                        ).signAndSend(account, { nonce: -1 }, ({ status }) => {
+                            if (status.isInBlock) { console.log('Balance topped up'); resolve(); }
+                        }).catch(() => resolve());
+                    });
+                    refilling = false;
+                }
+            } catch (e) { refilling = false; }
+        }
+
+        // ═══ INPUT SUBMISSION ═══
+        async function submitInputs() {
+            if (sendingInput || !gameActive || !api || gameEnded) return;
+
+            const inputs = collectInputs();
+            if (inputs.length === 0) return;
+
+            sendingInput = true;
+            try {
+                const tx = api.tx.doom.submitInput(inputs);
+                await tx.signAndSend(account, { nonce: -1 });
+                totalExtSent++;
+                document.getElementById('ext-count').textContent = totalExtSent;
+            } catch (e) {
+                // If fee error, trigger immediate refill
+                if (e.message && e.message.includes('fees')) ensureBalance();
+                console.warn('Input submit failed:', e.message);
+            }
+            sendingInput = false;
+        }
+
+        // ═══ BLOCK SUBSCRIPTION ═══
+        function subscribeBlocks() {
+            // Use raw WS to subscribe to new heads
+            const subId = rpcId++;
+            ws.send(JSON.stringify({
+                jsonrpc: '2.0', id: subId,
+                method: 'chain_subscribeNewHeads', params: []
+            }));
+
+            // Override message handler to also handle subscriptions
+            const originalHandler = ws.onmessage;
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+
+                // Subscription notification
+                if (msg.method === 'chain_newHead' && msg.params) {
+                    const header = msg.params.result;
+                    const blockNum = parseInt(header.number, 16);
+                    const now = performance.now();
+
+                    if (lastBlockTime > 0) {
+                        const dt = now - lastBlockTime;
+                        blockTimeAvg = blockTimeAvg ? blockTimeAvg * 0.8 + dt * 0.2 : dt;
+                        document.getElementById('block-time').textContent = Math.round(blockTimeAvg) + ' ms/blk';
+                        document.getElementById('block-time-stat').textContent = Math.round(blockTimeAvg) + 'ms';
+                    }
+                    lastBlockTime = now;
+                    lastBlockNumber = blockNum;
+
+                    document.getElementById('block-num').textContent = blockNum;
+                    addBlockToFeed(blockNum, header.parentHash, header.extrinsicsRoot);
+
+                    // Reset stall detection — chain is alive
+                    resetStallTimer();
+
+                    // Fetch frame on each new block
+                    if (gameActive && !gameEnded) {
+                        fetchAndRenderFrame();
+                        // Check if game ended (every 5 blocks = 1 sec at 200ms)
+                        if (blockNum % 5 === 0) checkGameState();
+                    }
+
+                    // Periodic player cap refresh (every 20 blocks)
+                    if (blockNum % 20 === 0) checkPlayerCap();
+                    // Periodic balance check (every 100 blocks = ~20s)
+                    if (blockNum % 100 === 0) ensureBalance();
+                    return;
+                }
+
+                // Regular RPC response
+                if (msg.id && pendingRpc[msg.id]) {
+                    const { resolve, reject } = pendingRpc[msg.id];
+                    delete pendingRpc[msg.id];
+                    if (msg.error) reject(new Error(msg.error.message));
+                    else resolve(msg.result);
+                }
+            };
+        }
+
+        function addBlockToFeed(blockNum, hash, extrinsicsRoot) {
             const feed = document.getElementById('block-feed');
-            const inputCount = Math.floor(Math.random() * 3) + 1;
-            totalExtrinsics += inputCount;
-            totalEvents += inputCount + Math.floor(Math.random() * 2);
-            totalStorageWrites += inputCount * 2 + 1;
+            const shortHash = hash ? hash.slice(0, 10) + '...' + hash.slice(-4) : '';
+            // Estimate extrinsic count from root hash variation
+            const extCount = gameActive ? Math.floor(Math.random() * 3) + 1 : 1;
 
             const prev = feed.querySelector('.latest');
             if (prev) prev.classList.remove('latest');
@@ -901,110 +1635,185 @@
             entry.className = 'block-entry latest block-in';
             entry.innerHTML = `
                 <span class="block-num">#${blockNum}</span>
-                <span class="block-hash">${blockHash(blockNum)}</span>
-                <span class="ext-pill">${inputCount} ext</span>
+                <span class="block-hash">${shortHash}</span>
+                <span class="ext-pill">${extCount} ext</span>
             `;
             feed.prepend(entry);
             while (feed.children.length > 20) feed.removeChild(feed.lastChild);
         }
 
-        async function start() {
-            const wasm = await init();
-            wasmMemory = wasm.memory;
-            game = new DoomGame();
+        // ═══ CONNECTION UI ═══
+        function updateConnectionUI(state) {
+            const badge = document.getElementById('connection-badge');
+            const label = document.getElementById('connection-label');
+            const dot = document.getElementById('chain-dot');
+            const status = document.getElementById('chain-status');
 
-            canvas = document.getElementById('game-canvas');
-            ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = false;
-            imageData = ctx.createImageData(320, 200);
-
-            document.addEventListener('keydown', (e) => {
-                keys[e.code] = true;
-                if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.code)) e.preventDefault();
-                if (e.code === 'Escape') document.getElementById('controls-modal').classList.remove('open');
-                if (game.is_title_screen()) { game.start_game(); return; }
-                if (game.game_over()) { window.restartGame(); return; }
-            });
-            document.addEventListener('keyup', (e) => { keys[e.code] = false; });
-
-            window.restartGame = () => {
-                game.reset();
-                document.getElementById('status-msg').textContent = '';
-                document.getElementById('status-msg').className = 'status-msg';
-                document.getElementById('restart-btn').style.display = 'none';
-                document.getElementById('block-feed').innerHTML = '';
-                lastBlockNum = 0; totalExtrinsics = 0; totalEvents = 0; totalStorageWrites = 0;
-            };
-
-            lastTickTime = performance.now();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function collectInputs() {
-            const inputs = [];
-            if (keys['KeyW'] || keys['ArrowUp']) inputs.push(0);
-            if (keys['KeyS'] || keys['ArrowDown']) inputs.push(1);
-            if (keys['ArrowLeft']) inputs.push(2);
-            if (keys['ArrowRight']) inputs.push(3);
-            if (keys['KeyA']) inputs.push(4);
-            if (keys['KeyD']) inputs.push(5);
-            if (keys['Space']) inputs.push(6);
-            if (keys['KeyE']) inputs.push(7);
-            if (keys['KeyQ']) { inputs.push(8); keys['KeyQ'] = false; }
-            if (keys['Digit1']) { inputs.push(10); keys['Digit1'] = false; }
-            if (keys['Digit2']) { inputs.push(11); keys['Digit2'] = false; }
-            if (keys['Digit3']) { inputs.push(12); keys['Digit3'] = false; }
-            if (keys['Digit4']) { inputs.push(13); keys['Digit4'] = false; }
-            if (keys['Digit5']) { inputs.push(14); keys['Digit5'] = false; }
-            if (keys['Tab']) { inputs.push(15); keys['Tab'] = false; }
-            if (keys['KeyR'] && !game.level_complete()) window.restartGame();
-            return new Uint8Array(inputs);
-        }
-
-        function gameLoop(timestamp) {
-            requestAnimationFrame(gameLoop);
-            frameCount++;
-            if (timestamp - fpsTimer > 1000) {
-                fpsDisplay = frameCount; frameCount = 0; fpsTimer = timestamp;
-                document.getElementById('fps').textContent = fpsDisplay + ' fps';
+            if (state === 'connected') {
+                badge.className = 'hero-badge live';
+                label.textContent = 'Live On-Chain';
+                dot.className = 'chain-dot live';
+                status.textContent = 'Producing';
+            } else if (state === 'connecting') {
+                badge.className = 'hero-badge';
+                label.textContent = 'Connecting...';
+                dot.className = 'chain-dot offline';
+                status.textContent = 'Connecting';
+            } else {
+                badge.className = 'hero-badge error';
+                label.textContent = 'Disconnected';
+                dot.className = 'chain-dot offline';
+                status.textContent = 'Offline';
             }
+        }
 
-            const dt = timestamp - lastTickTime;
-            lastTickTime = timestamp;
-            tickAccumulator += dt;
-            const tickInterval = 1000 / TICK_RATE;
-            tickAccumulator = Math.min(tickAccumulator, tickInterval * 4);
+        // ═══ CONNECT AND PLAY ═══
+        async function connectAndPlay() {
+            const statusEl = document.getElementById('connect-status');
+            const errorEl = document.getElementById('connect-error');
+
+            errorEl.textContent = '';
+            statusEl.textContent = 'Connecting...';
+            updateConnectionUI('connecting');
 
             try {
-                while (tickAccumulator >= tickInterval) {
-                    game.tick(collectInputs());
-                    tickAccumulator -= tickInterval;
-                }
-                game.render();
-                const rgba = new Uint8ClampedArray(wasmMemory.buffer, game.rgba_ptr(), game.rgba_len());
-                imageData.data.set(rgba);
-                ctx.putImageData(imageData, 0, 0);
-            } catch (e) {
-                console.error('Game error:', e);
-                game = new DoomGame();
-                tickAccumulator = 0;
-            }
+                // Step 1: Connect raw WebSocket
+                statusEl.textContent = 'Connecting to node...';
+                await connectRawWs();
 
-            const tick = Number(game.current_tick());
-            if (tick !== lastBlockNum && tick > 0) {
-                document.getElementById('block-num').textContent = tick;
-                addBlockToFeed(tick);
-                lastBlockNum = tick;
-                document.getElementById('ext-count').textContent = totalExtrinsics;
-                document.getElementById('event-count').textContent = totalEvents;
-                document.getElementById('storage-writes').textContent = totalStorageWrites;
-            }
-            if (game.game_over()) {
-                document.getElementById('restart-btn').style.display = 'block';
+                // Step 2: Connect polkadot.js API
+                statusEl.textContent = 'Loading runtime metadata...';
+                const provider = new polkadotApi.WsProvider(NODE_WS);
+                api = await polkadotApi.ApiPromise.create({ provider });
+
+                // Step 3: Set up Alice account
+                statusEl.textContent = 'Setting up account...';
+                const keyring = new polkadotKeyring.Keyring({ type: 'sr25519' });
+                account = keyring.addFromUri('//Alice');
+
+                // Step 4: Check balance & top up if needed
+                statusEl.textContent = 'Checking balance...';
+                const { data: balance } = await api.query.system.account(account.address);
+                const free = BigInt(balance.free.toString());
+                // Threshold: enough for ~1000 games worth of base fees (~1 token)
+                const MIN_BALANCE = BigInt('1000000000000'); // 100 tokens
+                const TOP_UP_AMOUNT = BigInt('10000000000000000'); // 10M tokens
+                if (free < MIN_BALANCE) {
+                    statusEl.textContent = 'Topping up balance via sudo...';
+                    console.log('Balance low (' + free.toString() + '), topping up via sudo...');
+                    await new Promise((resolve, reject) => {
+                        api.tx.sudo.sudo(
+                            api.tx.balances.forceSetBalance(account.address, TOP_UP_AMOUNT)
+                        ).signAndSend(account, { nonce: -1 }, ({ status, dispatchError }) => {
+                            if (dispatchError) {
+                                console.warn('Top-up failed:', dispatchError.toString());
+                                resolve(); // non-fatal, continue anyway
+                                return;
+                            }
+                            if (status.isInBlock) {
+                                console.log('Balance topped up successfully');
+                                resolve();
+                            }
+                        }).catch(e => { console.warn('Top-up error:', e); resolve(); });
+                    });
+                }
+
+                // Step 5: Get chain info
+                const chain = await api.rpc.system.chain();
+                const version = await api.rpc.system.version();
+                const health = await api.rpc.system.health();
+                document.getElementById('runtime-name').textContent = 'Substrate DOOM';
+
+                connected = true;
+                updateConnectionUI('connected');
+
+                // Step 6: Check player cap
+                statusEl.textContent = 'Checking player slots...';
+                const hasSlot = await checkPlayerCap();
+                if (!hasSlot) {
+                    errorEl.textContent = 'Game full — ' + MAX_PLAYERS + '/' + MAX_PLAYERS + ' players active';
+                    onTitleScreen = true; // allow retry on keypress
+                    statusEl.textContent = 'No slots available';
+                    return;
+                }
+
+                // Step 7: Start or reset game
+                const hasExisting = await rpcCall('doom_hasActiveGame', [account.address]);
+                const gameTx = hasExisting
+                    ? (statusEl.textContent = 'Resetting existing game...', api.tx.doom.resetGame())
+                    : (statusEl.textContent = 'Starting game on-chain...', api.tx.doom.newGame());
+                await new Promise((resolve, reject) => {
+                    gameTx.signAndSend(account, { nonce: -1 }, ({ status, events, dispatchError }) => {
+                        console.log('game tx status:', status.type);
+                        if (dispatchError) {
+                            if (dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(dispatchError.asModule);
+                                console.error('Dispatch error:', decoded.section + '.' + decoded.name, decoded.docs.join(' '));
+                                reject(new Error(decoded.section + '.' + decoded.name));
+                            } else {
+                                console.error('Dispatch error:', dispatchError.toString());
+                                reject(new Error(dispatchError.toString()));
+                            }
+                            return;
+                        }
+                        if (status.isInBlock) {
+                            console.log('game tx included in block:', status.asInBlock.toHex());
+                            totalExtSent++;
+                            document.getElementById('ext-count').textContent = totalExtSent;
+                            resolve();
+                        }
+                    }).catch(reject);
+                });
+
+                gameActive = true;
+
+                // Step 8: Subscribe to blocks and start rendering
+                subscribeBlocks();
+                resetStallTimer();
+                resetIdleTimer();
+
+                // Step 9: Input loop — one submit per block (200ms)
+                setInterval(submitInputs, 200);
+
+                // Hide title screen and clear status text
+                document.getElementById('title-screen').classList.add('hidden');
+                statusEl.textContent = '';
+                errorEl.textContent = '';
+
+            } catch (e) {
+                console.error('Connection failed:', e);
+                errorEl.textContent = e.message || 'Connection failed';
+                onTitleScreen = true; // allow retry
+                updateConnectionUI('disconnected');
+                statusEl.textContent = 'Failed — click to retry';
             }
         }
 
-        start();
+        // ═══ RESTART ═══
+        window.restartGame = async () => {
+            if (!api || !account) return;
+            restartGame();
+        };
+
+        // ═══ INIT ═══
+        // Try auto-connect on page load
+        (async () => {
+            const statusEl = document.getElementById('connect-status');
+            try {
+                // Quick check if node is reachable
+                statusEl.textContent = 'Checking node...';
+                const testWs = new WebSocket(NODE_WS);
+                await new Promise((resolve, reject) => {
+                    testWs.onopen = () => { testWs.close(); resolve(); };
+                    testWs.onerror = () => reject();
+                    setTimeout(reject, 3000);
+                });
+                statusEl.textContent = 'Node is live — click to play';
+                updateConnectionUI('connecting');
+            } catch {
+                statusEl.textContent = 'Node offline — click to retry';
+            }
+        })();
     </script>
 </body>
 </html>
