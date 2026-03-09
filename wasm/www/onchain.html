@@ -1459,7 +1459,7 @@
         async function restartGame() {
             if (restarting || !api || !account) return;
             restarting = true;
-            document.getElementById('status-msg').textContent = 'Restarting...';
+            document.getElementById('connect-status').textContent = 'Restarting...';
             try {
                 // Ensure balance before restart tx
                 await ensureBalance();
@@ -1483,11 +1483,11 @@
                 });
                 gameActive = true;
                 gameEnded = false;
-                document.getElementById('status-msg').textContent = '';
+                document.getElementById('connect-status').textContent = '';
                 resetIdleTimer();
             } catch (e) {
                 console.warn('Restart failed:', e.message);
-                document.getElementById('status-msg').textContent = 'Restart failed — press any key to retry';
+                document.getElementById('connect-status').textContent = 'Restart failed — press any key to retry';
                 gameEnded = true; // allow retry
             }
             restarting = false;
@@ -1750,8 +1750,10 @@
                 // Step 9: Input loop — one submit per block (200ms)
                 setInterval(submitInputs, 200);
 
-                // Hide title screen
+                // Hide title screen and clear status text
                 document.getElementById('title-screen').classList.add('hidden');
+                statusEl.textContent = '';
+                errorEl.textContent = '';
 
             } catch (e) {
                 console.error('Connection failed:', e);
