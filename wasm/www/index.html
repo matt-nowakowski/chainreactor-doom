@@ -297,6 +297,7 @@
             display: inline-block; margin-right: 4px;
         }
         .chain-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .chain-dot.connecting { background: var(--yellow); box-shadow: 0 0 6px rgba(234,179,8,0.4); }
         .chain-dot.offline { background: var(--red); }
 
         .block-feed {
@@ -1636,13 +1637,13 @@
             } else if (state === 'connecting') {
                 badge.className = 'hero-badge';
                 label.textContent = 'Technical Demo';
-                dot.className = 'chain-dot offline';
+                dot.className = 'chain-dot connecting';
                 status.textContent = 'Connecting';
             } else {
                 badge.className = 'hero-badge error';
                 label.textContent = 'Technical Demo';
                 dot.className = 'chain-dot offline';
-                status.textContent = 'Offline';
+                status.textContent = 'Disconnected';
             }
         }
 
