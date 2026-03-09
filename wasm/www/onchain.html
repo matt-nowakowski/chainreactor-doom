@@ -1004,7 +1004,7 @@
         }
 
         // ═══ CONFIGURATION ═══
-        const NODE_WS = 'ws://159.89.88.85:9944';
+        const NODE_WS = 'ws://161.35.12.194:9944';
         const FRAME_WIDTH = 320;
         const FRAME_HEIGHT = 200;
         const FRAME_BYTES = FRAME_WIDTH * FRAME_HEIGHT * 4; // RGBA
@@ -1697,7 +1697,7 @@
                 const chain = await api.rpc.system.chain();
                 const version = await api.rpc.system.version();
                 const health = await api.rpc.system.health();
-                document.getElementById('runtime-name').textContent = chain.toString().slice(0, 12);
+                document.getElementById('runtime-name').textContent = 'Substrate DOOM';
 
                 connected = true;
                 updateConnectionUI('connected');

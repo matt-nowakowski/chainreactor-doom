@@ -6,7 +6,7 @@
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Keyring } from '@polkadot/keyring';
 
-const WS_URL = process.argv[2] || 'ws://159.89.88.85:9944';
+const WS_URL = process.argv[2] || 'ws://161.35.12.194:9944';
 const FP_SCALE = 1000;
 
 // Helper: center of grid cell in fixed-point
