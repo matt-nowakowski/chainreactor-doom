@@ -188,6 +188,10 @@
         }
         .controls-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
 
+        .render-toggle { transition: all 0.15s; }
+        .render-toggle:hover { background: rgba(0,0,0,0.8); color: var(--text-muted); }
+        .render-toggle.client { background: rgba(34,197,94,0.3); color: var(--green); border-color: rgba(34,197,94,0.3); }
+
         .title-screen {
             position: absolute; inset: 0;
             background: #000;
@@ -582,6 +586,7 @@
                     <div class="viewport-hud">
                         <div class="hud-pill" id="latency">-- ms</div>
                         <div class="hud-pill" id="block-time">-- ms/blk</div>
+                        <div class="hud-pill render-toggle" id="render-toggle" onclick="toggleRenderMode()" style="cursor:pointer;user-select:none;" title="Toggle render mode">RPC</div>
                     </div>
                     <div class="viewport-controls-hint">
                         <button class="controls-toggle" onclick="document.getElementById('controls-modal').classList.add('open')">? Controls</button>
@@ -756,7 +761,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.6.2/bundle-polkadot-keyring.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@polkadot/api@10.13.1/bundle-polkadot-api.min.js"></script>
 
-    <script>
+    <script type="module">
+        // ═══ WASM MODULE (for client-side render mode) ═══
+        import init, { render_from_scale } from './pkg/doom_wasm.js';
+        let wasmReady = false;
+        let wasmInitPromise = null;
+        async function ensureWasm() {
+            if (wasmReady) return true;
+            if (!wasmInitPromise) wasmInitPromise = init().then(() => { wasmReady = true; });
+            await wasmInitPromise;
+            return true;
+        }
+
         // ═══ CONFIGURATION ═══
         const NODE_WS = 'ws://159.89.88.85:9944';
         const FRAME_WIDTH = 320;
@@ -764,6 +780,7 @@
         const FRAME_BYTES = FRAME_WIDTH * FRAME_HEIGHT * 4; // RGBA
 
         // ═══ STATE ═══
+        let renderMode = 'rpc'; // 'rpc' = full on-chain render, 'client' = client-side render from on-chain state
         let api = null;
         let account = null; // Alice keypair
         let ws = null; // Raw WebSocket for custom RPC
@@ -1117,6 +1134,22 @@
             }, IDLE_TIMEOUT_MS - 30000);
         }
 
+        // ═══ RENDER MODE TOGGLE ═══
+        function toggleRenderMode() {
+            if (renderMode === 'rpc') {
+                renderMode = 'client';
+                ensureWasm(); // preload WASM
+                document.getElementById('render-toggle').textContent = 'LOCAL';
+                document.getElementById('render-toggle').classList.add('client');
+            } else {
+                renderMode = 'rpc';
+                document.getElementById('render-toggle').textContent = 'RPC';
+                document.getElementById('render-toggle').classList.remove('client');
+            }
+        }
+        // Expose to onclick
+        window.toggleRenderMode = toggleRenderMode;
+
         // ═══ FRAME RENDERING (pipelined, base64+gzip) ═══
         let framePending = false; // true while a render RPC is in-flight
         let nextFrameQueued = false; // true if a new block arrived while fetching
@@ -1130,37 +1163,49 @@
 
             try {
                 const startTime = performance.now();
-                const b64Data = await rpcCall('doom_renderFrame', [account.address]);
+                let bytes;
+
+                if (renderMode === 'client') {
+                    // CLIENT MODE: fetch tiny SCALE state, render locally via WASM
+                    await ensureWasm();
+                    const hexState = await rpcCall('doom_getState', [account.address]);
+                    if (!hexState || hexState.length < 10) { framePending = false; return; }
+                    const hex = hexState.startsWith('0x') ? hexState.slice(2) : hexState;
+                    const stateBytes = new Uint8Array(hex.length / 2);
+                    for (let i = 0; i < stateBytes.length; i++) {
+                        stateBytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+                    }
+                    bytes = render_from_scale(stateBytes);
+                } else {
+                    // RPC MODE: full on-chain render, base64+gzip compressed
+                    const b64Data = await rpcCall('doom_renderFrame', [account.address]);
+                    if (!b64Data || b64Data.length < 10) { framePending = false; return; }
+
+                    const compressed = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+                    const ds = new DecompressionStream('gzip');
+                    const writer = ds.writable.getWriter();
+                    const reader = ds.readable.getReader();
+                    writer.write(compressed);
+                    writer.close();
+
+                    const chunks = [];
+                    let totalLen = 0;
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        totalLen += value.length;
+                    }
+                    bytes = new Uint8Array(totalLen);
+                    let offset = 0;
+                    for (const chunk of chunks) {
+                        bytes.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                }
+
                 const latency = Math.round(performance.now() - startTime);
                 document.getElementById('latency').textContent = latency + ' ms';
-
-                if (!b64Data || b64Data.length < 10) {
-                    framePending = false;
-                    return;
-                }
-
-                // Decode base64 → gzip bytes → decompress → RGBA
-                const compressed = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
-                const ds = new DecompressionStream('gzip');
-                const writer = ds.writable.getWriter();
-                const reader = ds.readable.getReader();
-                writer.write(compressed);
-                writer.close();
-
-                const chunks = [];
-                let totalLen = 0;
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    totalLen += value.length;
-                }
-                const bytes = new Uint8Array(totalLen);
-                let offset = 0;
-                for (const chunk of chunks) {
-                    bytes.set(chunk, offset);
-                    offset += chunk.length;
-                }
 
                 if (bytes.length >= FRAME_BYTES) {
                     imageData.data.set(bytes.subarray(0, FRAME_BYTES));

@@ -1,5 +1,19 @@
 use doom_engine::*;
+use parity_scale_codec::Decode;
 use wasm_bindgen::prelude::*;
+
+/// Standalone renderer: takes SCALE-encoded GameState bytes from the chain,
+/// decodes them, renders a frame, and returns raw RGBA pixels.
+#[wasm_bindgen]
+pub fn render_from_scale(state_bytes: &[u8]) -> Vec<u8> {
+    let state = match GameState::decode(&mut &state_bytes[..]) {
+        Ok(s) => s,
+        Err(_) => return Vec::new(),
+    };
+    let mut fb = Framebuffer::new();
+    render_frame(&state, &mut fb);
+    fb.rgba.to_vec()
+}
 
 /// WASM-exposed game instance.
 #[wasm_bindgen]
