@@ -1,7 +1,7 @@
 //! JSON-RPC extension for on-chain DOOM.
 //!
 //! Exposes three RPC methods:
-//! - `doom_renderFrame(account)` → hex-encoded 320×200 RGBA framebuffer
+//! - `doom_renderFrame(account)` → base64-encoded gzip-compressed 320×200 RGBA framebuffer
 //! - `doom_getState(account)` → hex-encoded SCALE GameState
 //! - `doom_hasActiveGame(account)` → bool
 //!
@@ -9,8 +9,11 @@
 //! from on-chain storage and renders frames natively (not in WASM).
 
 use std::sync::Arc;
+use std::io::Write;
 
 use codec::{Codec, Encode};
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
@@ -29,6 +32,15 @@ fn to_hex(bytes: &[u8]) -> String {
         s.push_str(&format!("{:02x}", b));
     }
     s
+}
+
+/// Compress bytes with gzip and encode as base64.
+fn compress_and_encode(bytes: &[u8]) -> String {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::fast());
+    encoder.write_all(bytes).unwrap();
+    let compressed = encoder.finish().unwrap();
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.encode(&compressed)
 }
 
 /// RPC trait for DOOM game interaction.
@@ -85,7 +97,7 @@ where
                 // Render locally in RPC handler (native context — always has std)
                 let mut fb = doom_engine::Framebuffer::new();
                 doom_engine::render_frame(&state, &mut fb);
-                Ok(to_hex(&fb.rgba))
+                Ok(compress_and_encode(&fb.rgba))
             }
             None => Err(jsonrpsee::core::Error::Custom(
                 "No active game for this player".to_string(),

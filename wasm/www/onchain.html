@@ -1117,25 +1117,49 @@
             }, IDLE_TIMEOUT_MS - 30000);
         }
 
-        // ═══ FRAME RENDERING ═══
+        // ═══ FRAME RENDERING (pipelined, base64+gzip) ═══
+        let framePending = false; // true while a render RPC is in-flight
+        let nextFrameQueued = false; // true if a new block arrived while fetching
+
         async function fetchAndRenderFrame() {
             if (gameEnded) return; // freeze last frame on death/victory
 
+            // Pipeline: if already fetching, queue the next request
+            if (framePending) { nextFrameQueued = true; return; }
+            framePending = true;
+
             try {
                 const startTime = performance.now();
-                const hexData = await rpcCall('doom_renderFrame', [account.address]);
+                const b64Data = await rpcCall('doom_renderFrame', [account.address]);
                 const latency = Math.round(performance.now() - startTime);
                 document.getElementById('latency').textContent = latency + ' ms';
 
-                if (!hexData || hexData === '0x' || hexData.length < 10) {
+                if (!b64Data || b64Data.length < 10) {
+                    framePending = false;
                     return;
                 }
 
-                // Decode hex RGBA → canvas
-                const hex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
-                const bytes = new Uint8Array(hex.length / 2);
-                for (let i = 0; i < bytes.length; i++) {
-                    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+                // Decode base64 → gzip bytes → decompress → RGBA
+                const compressed = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+                const ds = new DecompressionStream('gzip');
+                const writer = ds.writable.getWriter();
+                const reader = ds.readable.getReader();
+                writer.write(compressed);
+                writer.close();
+
+                const chunks = [];
+                let totalLen = 0;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    totalLen += value.length;
+                }
+                const bytes = new Uint8Array(totalLen);
+                let offset = 0;
+                for (const chunk of chunks) {
+                    bytes.set(chunk, offset);
+                    offset += chunk.length;
                 }
 
                 if (bytes.length >= FRAME_BYTES) {
@@ -1146,6 +1170,14 @@
                 }
             } catch (e) {
                 // Silent fail — will retry next block
+            }
+
+            framePending = false;
+
+            // If a block arrived while we were fetching, immediately fetch again
+            if (nextFrameQueued && !gameEnded) {
+                nextFrameQueued = false;
+                fetchAndRenderFrame();
             }
         }
 

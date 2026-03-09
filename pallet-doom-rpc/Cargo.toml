@@ -9,6 +9,8 @@ doom-runtime-api = { path = "../doom-runtime-api" }
 doom-engine = { path = "../engine", features = ["std"] }
 codec = { package = "parity-scale-codec", version = "3" }
 jsonrpsee = { version = "0.16", features = ["server", "macros"] }
+flate2 = "1"
+base64 = "0.21"
 sp-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 sp-blockchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
