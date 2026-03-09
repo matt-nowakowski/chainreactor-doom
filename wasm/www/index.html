@@ -42,42 +42,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         /* Cinema dim transition — smooth light→dark */
-        .cinema-dim { transition: background-color 1.8s ease, color 1.8s ease; }
-        .cinema-dim nav,
-        .cinema-dim footer,
-        .cinema-dim .card,
-        .cinema-dim .feature-card,
-        .cinema-dim .section,
-        .cinema-dim .hero,
-        .cinema-dim .hero h1,
-        .cinema-dim .hero p,
-        .cinema-dim .spec-item,
-        .cinema-dim .section-header,
-        .cinema-dim .section-header h2,
-        .cinema-dim .feature-title,
-        .cinema-dim .feature-desc,
-        .cinema-dim .feature-label,
-        .cinema-dim .cta-title,
-        .cinema-dim .cta-desc,
-        .cinema-dim .cta-btn,
-        .cinema-dim .stat-label,
-        .cinema-dim .stat-value,
-        .cinema-dim .block-item,
-        .cinema-dim .logo,
-        .cinema-dim .nav-link,
-        .cinema-dim .footer-logo,
-        .cinema-dim .footer-tagline,
-        .cinema-dim .cta-box,
-        .cinema-dim .cta-box h2,
-        .cinema-dim .cta-box p,
-        .cinema-dim .cta-link,
-        .cinema-dim .demo-label span,
-        .cinema-dim .block-entry,
-        .cinema-dim .block-num,
-        .cinema-dim .block-hash,
-        .cinema-dim .card-header,
-        .cinema-dim kbd {
-            transition: background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease;
+        .cinema-dim, .cinema-dim * {
+            transition: background-color 1.4s ease, color 1.4s ease, border-color 1.4s ease;
         }
 
         body {
@@ -717,7 +683,7 @@
                         // Clean up transition class after animation completes
                         setTimeout(function() {
                             document.body.classList.remove('cinema-dim');
-                        }, 2200);
+                        }, 1800);
                     });
                 }, 600);
             });
@@ -1651,17 +1617,17 @@
 
             if (state === 'connected') {
                 badge.className = 'hero-badge live';
-                label.textContent = 'Live On-Chain';
+                label.textContent = 'Technical Demo';
                 dot.className = 'chain-dot live';
-                status.textContent = 'Producing';
+                status.textContent = 'Live';
             } else if (state === 'connecting') {
                 badge.className = 'hero-badge';
-                label.textContent = 'Connecting...';
+                label.textContent = 'Technical Demo';
                 dot.className = 'chain-dot offline';
                 status.textContent = 'Connecting';
             } else {
                 badge.className = 'hero-badge error';
-                label.textContent = 'Disconnected';
+                label.textContent = 'Technical Demo';
                 dot.className = 'chain-dot offline';
                 status.textContent = 'Offline';
             }
