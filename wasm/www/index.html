@@ -1392,7 +1392,7 @@
             const statusEl = document.getElementById('connect-status');
             try {
                 statusEl.textContent = reason;
-                await api.tx.doom.resetGame().signAndSend(account, { nonce: -1 });
+                await api.tx.doom.resetGame().signAndSend(account, { nonce: nonce++ });
                 totalExtSent++;
                 document.getElementById('ext-count').textContent = totalExtSent;
                 gameActive = false;
@@ -1546,7 +1546,7 @@
                 // Ensure balance before restart tx
                 await ensureBalance();
                 await new Promise((resolve, reject) => {
-                    api.tx.doom.resetGame().signAndSend(account, { nonce: -1 }, ({ status, dispatchError }) => {
+                    api.tx.doom.resetGame().signAndSend(account, { nonce: nonce++ }, ({ status, dispatchError }) => {
                         if (dispatchError) {
                             if (dispatchError.isModule) {
                                 const decoded = api.registry.findMetaError(dispatchError.asModule);
@@ -1590,7 +1590,7 @@
                     await new Promise((resolve) => {
                         api.tx.sudo.sudo(
                             api.tx.balances.forceSetBalance(account.address, TOP_UP)
-                        ).signAndSend(account, { nonce: -1 }, ({ status }) => {
+                        ).signAndSend(account, { nonce: nonce++ }, ({ status }) => {
                             if (status.isInBlock) { console.log('Balance topped up'); resolve(); }
                         }).catch(() => resolve());
                     });
@@ -1600,24 +1600,22 @@
         }
 
         // ═══ INPUT SUBMISSION ═══
-        async function submitInputs() {
-            if (sendingInput || !gameActive || !api || gameEnded) return;
+        function submitInputs() {
+            if (!gameActive || !api || gameEnded || nonce === null) return;
 
             const inputs = collectInputs();
             if (inputs.length === 0) return;
 
-            sendingInput = true;
-            try {
-                const tx = api.tx.doom.submitInput(inputs);
-                await tx.signAndSend(account, { nonce: -1 });
+            const currentNonce = nonce++;
+            const tx = api.tx.doom.submitInput(inputs);
+            // Fire and forget — manual nonce means no RPC round-trip
+            tx.signAndSend(account, { nonce: currentNonce }).then(() => {
                 totalExtSent++;
                 document.getElementById('ext-count').textContent = totalExtSent;
-            } catch (e) {
-                // If fee error, trigger immediate refill
+            }).catch(e => {
+                console.warn('Input submit failed (nonce ' + currentNonce + '):', e.message);
                 if (e.message && e.message.includes('fees')) ensureBalance();
-                console.warn('Input submit failed:', e.message);
-            }
-            sendingInput = false;
+            });
         }
 
         // ═══ BLOCK SUBSCRIPTION ═══
@@ -1764,8 +1762,9 @@
 
                 // Step 4: Check balance & top up if needed
                 statusEl.textContent = 'Checking balance...';
-                const { data: balance } = await api.query.system.account(account.address);
-                const free = BigInt(balance.free.toString());
+                const accountData = await api.query.system.account(account.address);
+                nonce = accountData.nonce.toNumber();
+                const free = BigInt(accountData.data.free.toString());
                 // Threshold: enough for ~1000 games worth of base fees (~1 token)
                 const MIN_BALANCE = BigInt('1000000000000'); // 100 tokens
                 const TOP_UP_AMOUNT = BigInt('10000000000000000'); // 10M tokens
@@ -1842,6 +1841,10 @@
                 subscribeBlocks();
                 resetStallTimer();
                 resetIdleTimer();
+
+                // Refresh nonce after all setup txs, then start fast input loop
+                const freshAccount = await api.query.system.account(account.address);
+                nonce = freshAccount.nonce.toNumber();
 
                 // Step 9: Input loop — one submit per block (200ms)
                 setInterval(submitInputs, 200);
