@@ -1187,7 +1187,7 @@
                 const blockNum = parseInt(header.number, 16);
                 document.getElementById('chain-dot').className = 'chain-dot live';
                 document.getElementById('chain-status').textContent = 'Live';
-                document.getElementById('runtime-name').textContent = runtimeVersion.specName === 'doom-node' ? 'Substrate DOOM' : runtimeVersion.specName;
+                document.getElementById('runtime-name').textContent = ['doom-node', 'tnf-node'].includes(runtimeVersion.specName) ? 'Substrate DOOM' : runtimeVersion.specName;
                 document.getElementById('block-num').textContent = blockNum.toLocaleString();
                 document.getElementById('block-time-stat').textContent = '200ms';
 
