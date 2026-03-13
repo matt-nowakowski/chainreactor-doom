@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-BINARY_URL="https://github.com/matt-nowakowski/chainreactor-node/releases/download/v1.19.10-doom/cr-node-doom-linux-amd64"
+BINARY_URL="https://github.com/matt-nowakowski/chainreactor-node/releases/download/v1.19.12-doom/cr-node-doom-linux-amd64"
 BINARY_PATH="/usr/local/bin/cr-node-doom"
 DATA_DIR="/var/lib/cr-node-doom"
 SERVICE_NAME="cr-node-doom"
